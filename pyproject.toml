@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "slr-assessor"
+version = "2.0.0"
+description = "A CLI tool for standardizing and accelerating paper screening in Systematic Literature Reviews using LLMs"
+authors = [
+    {name = "SLR Assessor Team"},
+]
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "typer>=0.9.0",
+    "pydantic>=2.0.0",
+    "pandas>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.0.0",
+    "openai>=1.92.2",
+    "google-generativeai>=0.8.5",
+    "anthropic>=0.55.0",
+]
+
+[project.scripts]
+slr-assessor = "slr_assessor.main:app"
+
+[project.urls]
+Homepage = "https://github.com/example/slr-assessor"
+Repository = "https://github.com/example/slr-assessor.git"
+Issues = "https://github.com/example/slr-assessor/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["slr_assessor"]
