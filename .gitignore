@@ -63,3 +63,6 @@ Thumbs.db
 
 # API Keys
 .env
+
+# Data Files
+data/
