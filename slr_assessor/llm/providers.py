@@ -73,7 +73,7 @@ class OpenAIProvider:
 class GeminiProvider:
     """Google Gemini provider implementation."""
 
-    def __init__(self, api_key: str = None, model: str = "gemini-1.5-flash"):
+    def __init__(self, api_key: str = None, model: str = "gemini-2.5-flash"):
         """Initialize Gemini provider.
 
         Args:
@@ -103,7 +103,7 @@ class GeminiProvider:
         """Get assessment from Gemini API."""
         try:
             response = self.client.generate_content(
-                prompt,
+                contents=prompt,
                 generation_config={
                     "temperature": 0.1,
                     "max_output_tokens": 1000,
