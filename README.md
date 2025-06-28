@@ -2,94 +2,121 @@
 
 A command-line interface tool designed to standardize and accelerate the paper screening process for Systematic Literature Reviews (SLRs) using Large Language Models.
 
-## Features
+## ✨ Features
 
-- **Automated Paper Screening**: Use LLMs for preliminary assessment
-- **Standardized QA Protocol**: Consistent evaluation across LLM and human assessments
-- **Traceability**: Structured CSV outputs with clear audit trails
-- **Concordance Analysis**: Calculate Cohen's Kappa and identify conflicts
-- **Multiple LLM Providers**: Support for OpenAI, Google Gemini, and Anthropic
+- 🤖 **Automated Paper Screening**: Use LLMs (OpenAI, Gemini, Anthropic) for preliminary assessment
+- 📋 **Standardized QA Protocol**: Consistent 4-point evaluation framework
+- 💰 **Cost Management**: Estimate and track token usage and costs
+- 📊 **Concordance Analysis**: Calculate Cohen's Kappa and identify conflicts
+- 🔍 **Traceability**: Structured CSV outputs with clear audit trails
+- 🔧 **Multiple Providers**: Support for OpenAI, Google Gemini, and Anthropic
 
-## Installation
+## 🚀 Quick Start
 
-### Using uv (recommended)
+### Installation
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone <repository-url>
 cd slr_assessor
-
-# Create environment and install dependencies
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -e .
-
-# Install with specific LLM provider support
-uv pip install -e ".[openai]"     # For OpenAI
-uv pip install -e ".[gemini]"     # For Google Gemini
-uv pip install -e ".[anthropic]"  # For Anthropic
-uv pip install -e ".[all]"        # For all providers
+uv venv && source .venv/bin/activate
+uv pip install -e ".[all]"
 ```
 
-## Configuration
+### Configuration
 
-Create a `.env` file in the project root with your API keys:
-
+Create `.env` file with your API keys:
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
-GOOGLE_API_KEY=your_google_api_key_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
+OPENAI_API_KEY=your_key_here
+GOOGLE_API_KEY=your_key_here
+ANTHROPIC_API_KEY=your_key_here
 ```
 
-## Usage
-
-### Screen Papers with LLM
+### Basic Usage
 
 ```bash
+# Estimate costs first
+slr-assessor estimate-cost papers.csv --provider openai
+
+# Screen papers
 slr-assessor screen papers.csv --provider openai --output results.csv
+
+# Compare evaluations
+slr-assessor compare llm_results.csv human_results.csv --output analysis.json
 ```
 
-### Process Human Evaluations
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Installation Guide](docs/installation.md) | Detailed setup instructions and troubleshooting |
+| [Usage Guide](docs/usage.md) | Complete command reference and examples |
+| [QA Protocol](docs/qa-protocol.md) | Quality assurance questions and scoring system |
+| [Specification](docs/SPECIFICATION.md) | Technical architecture and data models |
+| [Cost Tracking](docs/cost_tracking.md) | Token usage and cost management features |
+
+## 🎯 Quality Assurance Framework
+
+The tool evaluates papers using 4 standardized questions:
+
+1. **Study Objective Clarity**: Clear research questions/objectives?
+2. **Practical Application**: Evidence of empirical results/applications?
+3. **Challenge Context**: Contextualizes traditional/AI challenges?
+4. **AI Integration**: Addresses AI-traditional knowledge integration?
+
+**Decision Thresholds:**
+- **Include**: ≥ 2.5 total score
+- **Conditional**: 1.5-2.4 total score  
+- **Exclude**: < 1.5 total score
+
+## 📋 Input Format
+
+Your CSV file needs these columns:
+```csv
+id,title,abstract
+paper_001,"AI in Healthcare","This study explores..."
+```
+
+## 🛠️ Available Commands
+
+| Command | Purpose |
+|---------|---------|
+| `screen` | Automated LLM-based paper screening |
+| `process-human` | Process human evaluation data |
+| `compare` | Compare two evaluation datasets |
+| `estimate-cost` | Estimate screening costs before execution |
+| `analyze-usage` | Analyze usage reports and costs |
+
+## 🔧 Supported Models
+
+- **OpenAI**: GPT-4, GPT-4-turbo, GPT-3.5-turbo
+- **Google**: Gemini-2.5-flash, Gemini-2.5-pro
+- **Anthropic**: Claude-3-sonnet, Claude-3-haiku, Claude-3-opus
+
+## 📊 Example Workflow
 
 ```bash
-slr-assessor process-human human_scores.csv --output processed_results.csv
+# 1. Estimate costs for different models
+slr-assessor estimate-cost papers.csv --provider openai --model gpt-4
+slr-assessor estimate-cost papers.csv --provider gemini --model gemini-2.5-flash
+
+# 2. Run screening with cost tracking
+slr-assessor screen papers.csv \
+  --provider openai \
+  --output results.csv \
+  --usage-report usage.json
+
+# 3. Analyze costs and usage
+slr-assessor analyze-usage usage.json
+
+# 4. Compare with human evaluations
+slr-assessor compare results.csv human_eval.csv --output comparison.json
 ```
 
-### Compare Evaluations
-
-```bash
-slr-assessor compare results1.csv results2.csv --output conflict_report.json
-```
-
-## Input CSV Format
-
-### For `screen` command:
-- `id`: Unique paper identifier
-- `title`: Paper title
-- `abstract`: Paper abstract
-
-### For `process-human` command:
-- `id`: Unique paper identifier
-- `title`: Paper title
-- `abstract`: Paper abstract
-- `qa1_score`, `qa1_reason`: Score (0, 0.5, 1) and reason for QA1
-- `qa2_score`, `qa2_reason`: Score (0, 0.5, 1) and reason for QA2
-- `qa3_score`, `qa3_reason`: Score (0, 0.5, 1) and reason for QA3
-- `qa4_score`, `qa4_reason`: Score (0, 0.5, 1) and reason for QA4
-
-## Quality Assurance Questions
-
-1. **QA1**: Does the abstract clearly present the study's objective, research question, or central focus?
-2. **QA2**: Does the abstract provide any indication of a practical application or an empirical result?
-3. **QA3**: Does the abstract contextualize the challenge faced by the traditional community or by the application of AI?
-4. **QA4**: Does the abstract directly address the integration of AI with traditional communities/knowledge?
-
-## Decision Thresholds
-
-- **Include**: total_score ≥ 2.5
-- **Conditional Review**: 1.5 ≤ total_score < 2.5
-- **Exclude**: total_score < 1.5
-
-## License
+## 📄 License
 
 MIT License
+
+---
+
+**Need help?** Check the [Installation Guide](docs/installation.md) for detailed setup instructions or the [Usage Guide](docs/usage.md) for complete command documentation.
