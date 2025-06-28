@@ -31,7 +31,6 @@ env.bak/
 venv.bak/
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -60,6 +59,7 @@ Thumbs.db
 *.json
 !examples/*.csv
 !examples/*.json
+!.vscode/*.json
 
 # API Keys
 .env
