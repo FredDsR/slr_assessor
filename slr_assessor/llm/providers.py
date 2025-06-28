@@ -2,7 +2,8 @@
 
 import json
 import os
-from typing import Protocol, runtime_checkable, Tuple
+from typing import Protocol, runtime_checkable
+
 from ..models import LLMAssessment, TokenUsage
 
 
@@ -10,7 +11,7 @@ from ..models import LLMAssessment, TokenUsage
 class LLMProvider(Protocol):
     """Protocol for LLM providers."""
 
-    def get_assessment(self, prompt: str) -> Tuple[str, TokenUsage]:
+    def get_assessment(self, prompt: str) -> tuple[str, TokenUsage]:
         """Get assessment from the LLM provider.
 
         Args:
@@ -50,7 +51,7 @@ class OpenAIProvider:
                 "openai package not installed. Install with: uv pip install openai"
             )
 
-    def get_assessment(self, prompt: str) -> Tuple[str, TokenUsage]:
+    def get_assessment(self, prompt: str) -> tuple[str, TokenUsage]:
         """Get assessment from OpenAI API."""
         try:
             response = self.client.chat.completions.create(
@@ -124,7 +125,7 @@ class GeminiProvider:
                 "google-generativeai package not installed. Install with: uv pip install google-generativeai"
             )
 
-    def get_assessment(self, prompt: str) -> Tuple[str, TokenUsage]:
+    def get_assessment(self, prompt: str) -> tuple[str, TokenUsage]:
         """Get assessment from Gemini API."""
         try:
             response = self.client.generate_content(
@@ -137,7 +138,7 @@ class GeminiProvider:
 
             # Gemini doesn't always provide detailed token usage
             # We'll estimate based on the response
-            from ..utils.cost_calculator import estimate_tokens, calculate_cost
+            from ..utils.cost_calculator import calculate_cost, estimate_tokens
 
             estimated_input_tokens = estimate_tokens(prompt, "gemini")
             estimated_output_tokens = estimate_tokens(response.text, "gemini")
@@ -195,7 +196,7 @@ class AnthropicProvider:
                 "anthropic package not installed. Install with: uv pip install anthropic"
             )
 
-    def get_assessment(self, prompt: str) -> Tuple[str, TokenUsage]:
+    def get_assessment(self, prompt: str) -> tuple[str, TokenUsage]:
         """Get assessment from Anthropic API."""
         try:
             response = self.client.messages.create(

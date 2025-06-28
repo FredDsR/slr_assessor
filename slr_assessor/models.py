@@ -1,8 +1,9 @@
 """Pydantic data models for the SLR Assessor CLI."""
 
-from typing import List, Literal, Optional
-from pydantic import BaseModel
 from decimal import Decimal
+from typing import Literal, Optional
+
+from pydantic import BaseModel
 
 
 class Paper(BaseModel):
@@ -25,7 +26,7 @@ class QAResponseItem(BaseModel):
 class LLMAssessment(BaseModel):
     """Defines the complete, structured JSON object expected from the LLM provider."""
 
-    assessments: List[QAResponseItem]
+    assessments: list[QAResponseItem]
     overall_summary: str
 
 
@@ -70,7 +71,7 @@ class UsageReport(BaseModel):
     total_tokens: int
     total_cost: Decimal
     average_tokens_per_paper: float
-    paper_usages: List[TokenUsage] = []
+    paper_usages: list[TokenUsage] = []
 
 
 class EvaluationResult(BaseModel):
@@ -120,4 +121,4 @@ class ConflictReport(BaseModel):
     total_papers_compared: int
     total_conflicts: int
     cohen_kappa_score: float
-    conflicts: List[Conflict]
+    conflicts: list[Conflict]

@@ -1,6 +1,5 @@
 """Core logic for scoring and decision making."""
 
-from typing import Dict
 from ..models import EvaluationResult
 
 
@@ -25,8 +24,8 @@ def create_evaluation_result(
     paper_id: str,
     title: str,
     abstract: str,
-    qa_scores: Dict[str, float],
-    qa_reasons: Dict[str, str],
+    qa_scores: dict[str, float],
+    qa_reasons: dict[str, str],
     llm_summary: str = None,
     error: str = None,
 ) -> EvaluationResult:

@@ -2,29 +2,25 @@
 
 import json
 from typing import Optional
-from pathlib import Path
 
 import typer
+from dotenv import load_dotenv
 from rich.console import Console
 from rich.progress import track
-from rich.table import Table
-from dotenv import load_dotenv
 
-from .models import EvaluationResult
-from .core.evaluator import create_evaluation_result
 from .core.comparator import compare_evaluations
-from .llm.providers import create_provider, parse_llm_response
+from .core.evaluator import create_evaluation_result
 from .llm.prompt import format_assessment_prompt
-from .utils.io import (
-    read_papers_from_csv,
-    read_human_evaluations_from_csv,
-    read_evaluations_from_csv,
-    write_evaluations_to_csv,
-)
+from .llm.providers import create_provider, parse_llm_response
+from .models import EvaluationResult
 from .utils.cost_calculator import (
     estimate_screening_cost,
-    get_provider_models,
-    get_pricing_info,
+)
+from .utils.io import (
+    read_evaluations_from_csv,
+    read_human_evaluations_from_csv,
+    read_papers_from_csv,
+    write_evaluations_to_csv,
 )
 from .utils.usage_tracker import UsageTracker
 
@@ -162,7 +158,7 @@ def screen(
 
     except Exception as e:
         console.print(f"[red]Error: {str(e)}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -197,7 +193,7 @@ def process_human(
 
     except Exception as e:
         console.print(f"[red]Error: {str(e)}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -261,7 +257,7 @@ def compare(
 
     except Exception as e:
         console.print(f"[red]Error: {str(e)}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -349,7 +345,7 @@ def estimate_cost(
 
     except Exception as e:
         console.print(f"[red]Error: {str(e)}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -358,8 +354,9 @@ def analyze_usage(
 ):
     """Analyze a usage report and display detailed statistics."""
     try:
-        from .utils.usage_tracker import load_usage_report
         from rich.table import Table
+
+        from .utils.usage_tracker import load_usage_report
 
         # Load the report
         console.print(f"[blue]Loading usage report from {usage_report}...[/blue]")
@@ -445,7 +442,7 @@ def analyze_usage(
         # Paper breakdown if there are any individual usages
         if report.paper_usages:
             console.print(
-                f"\n[bold]Individual Paper Analysis (showing first 10):[/bold]"
+                "\n[bold]Individual Paper Analysis (showing first 10):[/bold]"
             )
             paper_table = Table()
             paper_table.add_column("Paper #", style="cyan")
@@ -475,7 +472,7 @@ def analyze_usage(
 
     except Exception as e:
         console.print(f"[red]Error: {str(e)}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 def _calculate_duration(start_time: str, end_time: Optional[str]) -> str:

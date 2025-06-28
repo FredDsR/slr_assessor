@@ -3,9 +3,10 @@
 import json
 import uuid
 from datetime import datetime
-from typing import List, Optional
-from ..models import UsageReport, TokenUsage
 from decimal import Decimal
+from typing import Optional
+
+from ..models import TokenUsage, UsageReport
 
 
 class UsageTracker:
@@ -27,7 +28,7 @@ class UsageTracker:
         self.total_papers_processed = 0
         self.successful_papers = 0
         self.failed_papers = 0
-        self.paper_usages: List[TokenUsage] = []
+        self.paper_usages: list[TokenUsage] = []
 
     def add_usage(self, token_usage: TokenUsage) -> None:
         """Add token usage for a processed paper.
@@ -112,20 +113,20 @@ class UsageTracker:
         if report.failed_papers > 0:
             console.print(f"[yellow]Failed papers: {report.failed_papers}[/yellow]")
 
-        console.print(f"\n[bold]Token Usage:[/bold]")
+        console.print("\n[bold]Token Usage:[/bold]")
         console.print(f"  Input tokens: {report.total_input_tokens:,}")
         console.print(f"  Output tokens: {report.total_output_tokens:,}")
         console.print(f"  Total tokens: {report.total_tokens:,}")
         console.print(f"  Average per paper: {report.average_tokens_per_paper:.1f}")
 
         if report.total_cost > 0:
-            console.print(f"\n[bold]Cost:[/bold]")
+            console.print("\n[bold]Cost:[/bold]")
             console.print(f"  Total: ${report.total_cost:.4f} USD")
             console.print(
                 f"  Per paper: ${report.total_cost / max(report.successful_papers, 1):.4f} USD"
             )
         else:
-            console.print(f"\n[yellow]Cost information not available[/yellow]")
+            console.print("\n[yellow]Cost information not available[/yellow]")
 
 
 def load_usage_report(filepath: str) -> UsageReport:
@@ -137,7 +138,7 @@ def load_usage_report(filepath: str) -> UsageReport:
     Returns:
         UsageReport object
     """
-    with open(filepath, "r") as f:
+    with open(filepath) as f:
         data = json.load(f)
 
     # Convert string costs back to Decimal

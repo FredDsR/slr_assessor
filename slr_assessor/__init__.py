@@ -3,7 +3,7 @@
 __version__ = "2.0.0"
 __author__ = "SLR Assessor Team"
 
-from .models import Paper, EvaluationResult, ConflictReport
 from .cli import app
+from .models import ConflictReport, EvaluationResult, Paper
 
 __all__ = ["Paper", "EvaluationResult", "ConflictReport", "app"]

@@ -32,7 +32,7 @@ ASSESSMENT_PROMPT_TEMPLATE = """You are a meticulous academic researcher tasked 
       "reason": "..."
     }},
     {{
-      "qa_id": "QA2", 
+      "qa_id": "QA2",
       "question": "{qa2_question}",
       "score": <0, 0.5, or 1>,
       "reason": "..."

@@ -1,12 +1,11 @@
 """Logic for comparing evaluations and calculating Cohen's Kappa."""
 
-from typing import List, Tuple
-from ..models import EvaluationResult, ConflictReport, Conflict
+from ..models import Conflict, ConflictReport, EvaluationResult
 
 
 def identify_conflicts(
-    eval1: List[EvaluationResult], eval2: List[EvaluationResult]
-) -> Tuple[List[Conflict], List[str], List[str]]:
+    eval1: list[EvaluationResult], eval2: list[EvaluationResult]
+) -> tuple[list[Conflict], list[str], list[str]]:
     """Identify conflicts between two evaluation lists.
 
     Args:
@@ -55,7 +54,7 @@ def identify_conflicts(
     return conflicts, decisions1, decisions2
 
 
-def calculate_cohen_kappa(decisions1: List[str], decisions2: List[str]) -> float:
+def calculate_cohen_kappa(decisions1: list[str], decisions2: list[str]) -> float:
     """Calculate Cohen's Kappa score for agreement between two evaluations.
 
     Args:
@@ -69,7 +68,7 @@ def calculate_cohen_kappa(decisions1: List[str], decisions2: List[str]) -> float
         return 0.0
 
     # Get unique categories
-    categories = sorted(list(set(decisions1 + decisions2)))
+    categories = sorted(set(decisions1 + decisions2))
     n_categories = len(categories)
     n = len(decisions1)
 
@@ -108,7 +107,7 @@ def calculate_cohen_kappa(decisions1: List[str], decisions2: List[str]) -> float
 
 
 def compare_evaluations(
-    eval1: List[EvaluationResult], eval2: List[EvaluationResult]
+    eval1: list[EvaluationResult], eval2: list[EvaluationResult]
 ) -> ConflictReport:
     """Compare two evaluation lists and generate a conflict report.
 

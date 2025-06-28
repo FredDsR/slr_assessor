@@ -1,11 +1,11 @@
 """CSV reading and writing utilities."""
 
 import pandas as pd
-from typing import List
-from ..models import Paper, EvaluationResult
+
+from ..models import EvaluationResult, Paper
 
 
-def read_papers_from_csv(csv_path: str) -> List[Paper]:
+def read_papers_from_csv(csv_path: str) -> list[Paper]:
     """Read papers from input CSV file.
 
     Args:
@@ -43,7 +43,7 @@ def read_papers_from_csv(csv_path: str) -> List[Paper]:
     return papers
 
 
-def read_human_evaluations_from_csv(csv_path: str) -> List[EvaluationResult]:
+def read_human_evaluations_from_csv(csv_path: str) -> list[EvaluationResult]:
     """Read human evaluations from CSV file.
 
     Args:
@@ -110,7 +110,7 @@ def read_human_evaluations_from_csv(csv_path: str) -> List[EvaluationResult]:
     return evaluations
 
 
-def read_evaluations_from_csv(csv_path: str) -> List[EvaluationResult]:
+def read_evaluations_from_csv(csv_path: str) -> list[EvaluationResult]:
     """Read evaluations from a processed evaluation CSV file.
 
     Args:
@@ -178,7 +178,7 @@ def read_evaluations_from_csv(csv_path: str) -> List[EvaluationResult]:
 
 
 def write_evaluations_to_csv(
-    evaluations: List[EvaluationResult], csv_path: str
+    evaluations: list[EvaluationResult], csv_path: str
 ) -> None:
     """Write evaluations to CSV file.
 

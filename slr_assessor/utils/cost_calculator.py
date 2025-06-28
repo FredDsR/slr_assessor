@@ -1,10 +1,10 @@
 """Cost calculation and token usage utilities for LLM providers."""
 
 from decimal import Decimal
-from typing import Dict, Tuple
-from ..models import TokenUsage, CostEstimate
+
 import tiktoken
 
+from ..models import CostEstimate
 
 # Pricing information per provider and model (USD per 1K tokens)
 # Prices as of June 2025 - should be updated regularly
@@ -154,7 +154,7 @@ def get_provider_models(provider: str) -> list:
     return list(PRICING_TABLE.get(provider, {}).keys())
 
 
-def get_pricing_info(provider: str, model: str) -> Dict[str, Decimal]:
+def get_pricing_info(provider: str, model: str) -> dict[str, Decimal]:
     """Get pricing information for a specific model.
 
     Args:
