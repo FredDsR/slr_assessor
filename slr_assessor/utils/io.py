@@ -205,31 +205,63 @@ def write_evaluations_to_csv(
                 "decision",
                 "llm_summary",
                 "error",
+                "input_tokens",
+                "output_tokens",
+                "total_tokens",
+                "estimated_cost",
+                "model",
+                "provider",
             ]
         )
     else:
         # Convert to DataFrame
         data = []
         for eval_result in evaluations:
-            data.append(
-                {
-                    "id": eval_result.id,
-                    "title": eval_result.title,
-                    "abstract": eval_result.abstract,
-                    "qa1_score": eval_result.qa1_score,
-                    "qa1_reason": eval_result.qa1_reason,
-                    "qa2_score": eval_result.qa2_score,
-                    "qa2_reason": eval_result.qa2_reason,
-                    "qa3_score": eval_result.qa3_score,
-                    "qa3_reason": eval_result.qa3_reason,
-                    "qa4_score": eval_result.qa4_score,
-                    "qa4_reason": eval_result.qa4_reason,
-                    "total_score": eval_result.total_score,
-                    "decision": eval_result.decision,
-                    "llm_summary": eval_result.llm_summary,
-                    "error": eval_result.error,
-                }
-            )
+            row_data = {
+                "id": eval_result.id,
+                "title": eval_result.title,
+                "abstract": eval_result.abstract,
+                "qa1_score": eval_result.qa1_score,
+                "qa1_reason": eval_result.qa1_reason,
+                "qa2_score": eval_result.qa2_score,
+                "qa2_reason": eval_result.qa2_reason,
+                "qa3_score": eval_result.qa3_score,
+                "qa3_reason": eval_result.qa3_reason,
+                "qa4_score": eval_result.qa4_score,
+                "qa4_reason": eval_result.qa4_reason,
+                "total_score": eval_result.total_score,
+                "decision": eval_result.decision,
+                "llm_summary": eval_result.llm_summary,
+                "error": eval_result.error,
+            }
+
+            # Add token usage information if available
+            if eval_result.token_usage:
+                row_data.update(
+                    {
+                        "input_tokens": eval_result.token_usage.input_tokens,
+                        "output_tokens": eval_result.token_usage.output_tokens,
+                        "total_tokens": eval_result.token_usage.total_tokens,
+                        "estimated_cost": float(eval_result.token_usage.estimated_cost)
+                        if eval_result.token_usage.estimated_cost
+                        else None,
+                        "model": eval_result.token_usage.model,
+                        "provider": eval_result.token_usage.provider,
+                    }
+                )
+            else:
+                row_data.update(
+                    {
+                        "input_tokens": None,
+                        "output_tokens": None,
+                        "total_tokens": None,
+                        "estimated_cost": None,
+                        "model": None,
+                        "provider": None,
+                    }
+                )
+
+            data.append(row_data)
         df = pd.DataFrame(data)
 
     # Save to CSV

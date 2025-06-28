@@ -2,22 +2,22 @@
 
 import json
 import os
-from typing import Protocol, runtime_checkable
-from ..models import LLMAssessment
+from typing import Protocol, runtime_checkable, Tuple
+from ..models import LLMAssessment, TokenUsage
 
 
 @runtime_checkable
 class LLMProvider(Protocol):
     """Protocol for LLM providers."""
 
-    def get_assessment(self, prompt: str) -> str:
+    def get_assessment(self, prompt: str) -> Tuple[str, TokenUsage]:
         """Get assessment from the LLM provider.
 
         Args:
             prompt: The formatted prompt to send to the LLM
 
         Returns:
-            Raw response string from the LLM
+            Tuple of (raw response string, token usage info)
         """
         ...
 
@@ -50,7 +50,7 @@ class OpenAIProvider:
                 "openai package not installed. Install with: uv pip install openai"
             )
 
-    def get_assessment(self, prompt: str) -> str:
+    def get_assessment(self, prompt: str) -> Tuple[str, TokenUsage]:
         """Get assessment from OpenAI API."""
         try:
             response = self.client.chat.completions.create(
@@ -65,7 +65,32 @@ class OpenAIProvider:
                 temperature=0.1,
                 max_tokens=1000,
             )
-            return response.choices[0].message.content
+
+            # Extract token usage
+            usage = response.usage
+            token_usage = TokenUsage(
+                input_tokens=usage.prompt_tokens,
+                output_tokens=usage.completion_tokens,
+                total_tokens=usage.total_tokens,
+                model=self.model,
+                provider="openai",
+            )
+
+            # Calculate cost if pricing is available
+            from ..utils.cost_calculator import calculate_cost
+
+            try:
+                cost = calculate_cost(
+                    token_usage.input_tokens,
+                    token_usage.output_tokens,
+                    "openai",
+                    self.model,
+                )
+                token_usage.estimated_cost = cost
+            except:
+                pass  # Cost calculation failed, keep None
+
+            return response.choices[0].message.content, token_usage
         except Exception as e:
             raise RuntimeError(f"OpenAI API error: {str(e)}")
 
@@ -99,7 +124,7 @@ class GeminiProvider:
                 "google-generativeai package not installed. Install with: uv pip install google-generativeai"
             )
 
-    def get_assessment(self, prompt: str) -> str:
+    def get_assessment(self, prompt: str) -> Tuple[str, TokenUsage]:
         """Get assessment from Gemini API."""
         try:
             response = self.client.generate_content(
@@ -109,7 +134,35 @@ class GeminiProvider:
                     "max_output_tokens": 1000,
                 },
             )
-            return response.text
+
+            # Gemini doesn't always provide detailed token usage
+            # We'll estimate based on the response
+            from ..utils.cost_calculator import estimate_tokens, calculate_cost
+
+            estimated_input_tokens = estimate_tokens(prompt, "gemini")
+            estimated_output_tokens = estimate_tokens(response.text, "gemini")
+
+            token_usage = TokenUsage(
+                input_tokens=estimated_input_tokens,
+                output_tokens=estimated_output_tokens,
+                total_tokens=estimated_input_tokens + estimated_output_tokens,
+                model=self.model,
+                provider="gemini",
+            )
+
+            # Calculate cost
+            try:
+                cost = calculate_cost(
+                    token_usage.input_tokens,
+                    token_usage.output_tokens,
+                    "gemini",
+                    self.model,
+                )
+                token_usage.estimated_cost = cost
+            except Exception:
+                pass  # Cost calculation failed, keep None
+
+            return response.text, token_usage
         except Exception as e:
             raise RuntimeError(f"Gemini API error: {str(e)}")
 
@@ -142,7 +195,7 @@ class AnthropicProvider:
                 "anthropic package not installed. Install with: uv pip install anthropic"
             )
 
-    def get_assessment(self, prompt: str) -> str:
+    def get_assessment(self, prompt: str) -> Tuple[str, TokenUsage]:
         """Get assessment from Anthropic API."""
         try:
             response = self.client.messages.create(
@@ -151,7 +204,32 @@ class AnthropicProvider:
                 temperature=0.1,
                 messages=[{"role": "user", "content": prompt}],
             )
-            return response.content[0].text
+
+            # Extract token usage from Anthropic response
+            usage = response.usage
+            token_usage = TokenUsage(
+                input_tokens=usage.input_tokens,
+                output_tokens=usage.output_tokens,
+                total_tokens=usage.input_tokens + usage.output_tokens,
+                model=self.model,
+                provider="anthropic",
+            )
+
+            # Calculate cost
+            from ..utils.cost_calculator import calculate_cost
+
+            try:
+                cost = calculate_cost(
+                    token_usage.input_tokens,
+                    token_usage.output_tokens,
+                    "anthropic",
+                    self.model,
+                )
+                token_usage.estimated_cost = cost
+            except Exception:
+                pass  # Cost calculation failed, keep None
+
+            return response.content[0].text, token_usage
         except Exception as e:
             raise RuntimeError(f"Anthropic API error: {str(e)}")
 
