@@ -235,7 +235,9 @@ class AnthropicProvider:
             raise RuntimeError(f"Anthropic API error: {str(e)}")
 
 
-def create_provider(provider_name: str, api_key: str = None, model: str = None) -> LLMProvider:
+def create_provider(
+    provider_name: str, api_key: str = None, model: str = None
+) -> LLMProvider:
     """Factory function to create LLM providers.
 
     Args:
