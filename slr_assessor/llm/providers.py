@@ -26,7 +26,7 @@ class LLMProvider(Protocol):
 class OpenAIProvider:
     """OpenAI GPT provider implementation."""
 
-    def __init__(self, api_key: str = None, model: str = "gpt-4"):
+    def __init__(self, model: str, api_key: str = None):
         """Initialize OpenAI provider.
 
         Args:
@@ -99,7 +99,7 @@ class OpenAIProvider:
 class GeminiProvider:
     """Google Gemini provider implementation."""
 
-    def __init__(self, api_key: str = None, model: str = "gemini-2.5-flash"):
+    def __init__(self, model: str, api_key: str = None):
         """Initialize Gemini provider.
 
         Args:
@@ -171,7 +171,7 @@ class GeminiProvider:
 class AnthropicProvider:
     """Anthropic Claude provider implementation."""
 
-    def __init__(self, api_key: str = None, model: str = "claude-3-sonnet-20240229"):
+    def __init__(self, model: str, api_key: str = None):
         """Initialize Anthropic provider.
 
         Args:
@@ -235,7 +235,7 @@ class AnthropicProvider:
             raise RuntimeError(f"Anthropic API error: {str(e)}")
 
 
-def create_provider(provider_name: str, api_key: str = None) -> LLMProvider:
+def create_provider(provider_name: str, api_key: str = None, model: str = None) -> LLMProvider:
     """Factory function to create LLM providers.
 
     Args:
@@ -251,12 +251,21 @@ def create_provider(provider_name: str, api_key: str = None) -> LLMProvider:
         "anthropic": AnthropicProvider,
     }
 
+    default_model = {
+        "openai": "gpt-4",
+        "gemini": "gemini-2.5-flash",
+        "anthropic": "claude-3-sonnet-20240229",
+    }
+
     if provider_name not in providers:
         raise ValueError(
             f"Unknown provider: {provider_name}. Available: {list(providers.keys())}"
         )
 
-    return providers[provider_name](api_key=api_key)
+    if model is None:
+        model = default_model.get(provider_name, "gpt-4")
+
+    return providers[provider_name](api_key=api_key, model=model)
 
 
 def parse_llm_response(response: str) -> LLMAssessment:

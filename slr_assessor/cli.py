@@ -44,6 +44,9 @@ def screen(
     output: str = typer.Option(
         ..., "-o", "--output", help="Path to save evaluation results CSV"
     ),
+    model: Optional[str] = typer.Option(
+        None, "--model", help="Specific model to use (optional)"
+    ),
     api_key: Optional[str] = typer.Option(
         None, "--api-key", help="API key for LLM provider"
     ),
@@ -60,10 +63,11 @@ def screen(
 
         # Create LLM provider
         console.print(f"[blue]Initializing {provider} provider...[/blue]")
-        llm_provider = create_provider(provider, api_key)
+        llm_provider = create_provider(provider, api_key, model=model)
 
         # Initialize usage tracker
-        model = getattr(llm_provider, "model", "unknown")
+        if not model:
+            model = getattr(llm_provider, "model", "unknown")
         tracker = UsageTracker(provider, model)
 
         # Process each paper
