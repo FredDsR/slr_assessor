@@ -12,6 +12,7 @@ Welcome to the SLR Assessor documentation. This index helps you find the informa
 - **[QA Protocol](qa-protocol.md)** - Quality assurance framework, scoring system, and evaluation criteria
 - **[Specification](SPECIFICATION.md)** - Technical architecture, data models, and system design
 - **[Cost Tracking](cost_tracking.md)** - Token usage tracking, cost estimation, and budget management
+- **[Testing Guide](testing.md)** - Test suite documentation, running tests, and contributing guidelines
 
 ## 🎯 Quick Navigation
 
@@ -22,8 +23,9 @@ Welcome to the SLR Assessor documentation. This index helps you find the informa
 
 ### Developers
 1. Review [Specification](SPECIFICATION.md) for architecture details
-2. Check [Cost Tracking](cost_tracking.md) for usage tracking features
-3. See [Usage Guide](usage.md) for API integration examples
+2. Check [Testing Guide](testing.md) for test suite documentation
+3. Check [Cost Tracking](cost_tracking.md) for usage tracking features
+4. See [Usage Guide](usage.md) for API integration examples
 
 ### Researchers
 1. Understand [QA Protocol](qa-protocol.md) for evaluation methodology
@@ -71,6 +73,14 @@ Usage and cost management features:
 - Cost estimation tools
 - Provider-specific pricing
 - Budget optimization strategies
+
+### [Testing Guide](testing.md)
+Comprehensive test suite documentation:
+- Test structure and organization
+- Running tests and coverage reports
+- Adding new tests and fixtures
+- Mocking strategies and best practices
+- Contributing guidelines for developers
 
 ## 🔍 Finding Specific Information
 
