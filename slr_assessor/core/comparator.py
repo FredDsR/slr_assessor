@@ -1,5 +1,7 @@
 """Logic for comparing evaluations and calculating Cohen's Kappa."""
 
+from sklearn.metrics import cohen_kappa_score
+
 from ..models import Conflict, ConflictReport, EvaluationResult
 
 
@@ -67,43 +69,16 @@ def calculate_cohen_kappa(decisions1: list[str], decisions2: list[str]) -> float
     if not decisions1 or not decisions2 or len(decisions1) != len(decisions2):
         return 0.0
 
-    # Get unique categories
-    categories = sorted(set(decisions1 + decisions2))
-    n_categories = len(categories)
-    n = len(decisions1)
-
-    if n == 0:
+    if len(decisions1) == 0:
         return 0.0
 
-    # Create category to index mapping
-    cat_to_idx = {cat: i for i, cat in enumerate(categories)}
-
-    # Build confusion matrix
-    confusion_matrix = [[0 for _ in range(n_categories)] for _ in range(n_categories)]
-
-    for d1, d2 in zip(decisions1, decisions2):
-        i = cat_to_idx[d1]
-        j = cat_to_idx[d2]
-        confusion_matrix[i][j] += 1
-
-    # Calculate observed agreement (p_o)
-    p_o = sum(confusion_matrix[i][i] for i in range(n_categories)) / n
-
-    # Calculate expected agreement (p_e)
-    marginal_1 = [sum(confusion_matrix[i]) for i in range(n_categories)]
-    marginal_2 = [
-        sum(confusion_matrix[i][j] for i in range(n_categories))
-        for j in range(n_categories)
-    ]
-
-    p_e = sum((marginal_1[i] / n) * (marginal_2[i] / n) for i in range(n_categories))
-
-    # Calculate Cohen's Kappa
-    if p_e == 1.0:
+    # Use scikit-learn's cohen_kappa_score function
+    try:
+        kappa = cohen_kappa_score(decisions1, decisions2)
+        return kappa
+    except Exception:
+        # Fallback to 0.0 if calculation fails
         return 0.0
-
-    kappa = (p_o - p_e) / (1 - p_e)
-    return kappa
 
 
 def compare_evaluations(
