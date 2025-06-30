@@ -1,20 +1,21 @@
 """Tests for the data models."""
 
-import pytest
 from decimal import Decimal
-from datetime import datetime
+
+import pytest
 from pydantic import ValidationError
+
 from slr_assessor.models import (
-    Paper,
-    QAResponseItem,
-    LLMAssessment,
-    TokenUsage,
-    CostEstimate,
-    UsageReport,
-    EvaluationResult,
+    BackupSession,
     Conflict,
     ConflictReport,
-    BackupSession,
+    CostEstimate,
+    EvaluationResult,
+    LLMAssessment,
+    Paper,
+    QAResponseItem,
+    TokenUsage,
+    UsageReport,
 )
 
 
@@ -33,13 +34,13 @@ def test_paper_valid_creation():
 def test_paper_missing_required_fields():
     """Test that missing required fields raise validation errors."""
     with pytest.raises(ValidationError):
-        Paper(title="Test Paper", abstract="Test abstract")
+        Paper(title="Test Paper", abstract="Test abstract")  # type: ignore
 
     with pytest.raises(ValidationError):
-        Paper(id="test_001", abstract="Test abstract")
+        Paper(id="test_001", abstract="Test abstract")  # type: ignore
 
     with pytest.raises(ValidationError):
-        Paper(id="test_001", title="Test Paper")
+        Paper(id="test_001", title="Test Paper")  # type: ignore
 
 
 def test_qa_response_valid_creation():
@@ -72,7 +73,7 @@ def test_qa_response_missing_fields():
     """Test that missing required fields raise validation errors."""
     with pytest.raises(ValidationError):
         QAResponseItem(
-            question="Test question", score=1.0, reason="Test reason"
+            question="Test question", score=1.0, reason="Test reason"  # type: ignore
         )
 
 
