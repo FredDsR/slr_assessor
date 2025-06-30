@@ -116,23 +116,25 @@ class GeminiProvider:
 
         # Import here to make it optional
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=self.api_key)
-            self.client = genai.GenerativeModel(self.model)
+            from google import genai
+            self.client = genai.Client(api_key=self.api_key)
         except ImportError:
             raise ImportError(
-                "google-generativeai package not installed. Install with: uv pip install google-generativeai"
+                "google-genai package not installed. Install with: uv pip install google-genai"
             )
 
     def get_assessment(self, prompt: str) -> tuple[str, TokenUsage]:
         """Get assessment from Gemini API."""
         try:
-            response = self.client.generate_content(
+            from google.genai import types
+
+            response = self.client.models.generate_content(
+                model=self.model,
                 contents=prompt,
-                generation_config={
-                    "temperature": 0.1,
-                    "max_output_tokens": 1000,
-                },
+                config=types.GenerateContentConfig(
+                    temperature=0.1,
+                    max_output_tokens=1000,
+                ),
             )
 
             # Gemini doesn't always provide detailed token usage

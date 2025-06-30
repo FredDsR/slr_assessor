@@ -72,11 +72,11 @@ class EvaluationResult(BaseModel):
     qa3_reason: str
     qa4_score: float
     qa4_reason: str
-    
+
     # Calculated Totals
     total_score: float
     decision: Literal["Include", "Exclude", "Conditional Review"]
-    
+
     # Metadata
     llm_summary: Optional[str] = None # Only for LLM evaluations
     error: Optional[str] = None # To log any processing errors
@@ -267,6 +267,6 @@ You are a meticulous academic researcher tasked with conducting a quality assess
       * `pandas`: For all CSV I/O operations.
       * `scikit-learn`: For calculating Cohen's Kappa.
       * `python-dotenv`: For managing environment variables.
-      * Provider-specific SDKs (e.g., `openai`, `google-generativeai`) to be installed as optional dependencies.
+      * Provider-specific SDKs (e.g., `openai`, `google-genai`) to be installed as optional dependencies.
   * **Environment:**
       * API keys should be managed via a `.env` file in the project's root directory. The tool should be pre-configured to look for variables like `OPENAI_API_KEY`, `GOOGLE_API_KEY`, etc.
