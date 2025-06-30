@@ -16,15 +16,10 @@ def test_cli_app_exists():
 @patch('slr_assessor.cli.UsageTracker')
 @patch('slr_assessor.cli.write_evaluations_to_csv')
 def test_screen_command_basic(mock_write_csv, mock_usage_tracker,
-                                mock_create_provider, mock_read_papers):
+                                mock_create_provider, mock_read_papers, sample_papers):
     """Test basic screen command functionality."""
-    # Mock the dependencies
-    mock_papers = [Mock()]
-    mock_papers[0].id = "paper_001"
-    mock_papers[0].title = "Test Paper"
-    mock_papers[0].abstract = "Test abstract"
-
-    mock_read_papers.return_value = mock_papers
+    # Use fixture data instead of creating mock papers
+    mock_read_papers.return_value = sample_papers
 
     mock_provider = Mock()
     mock_provider.get_assessment.return_value = ('{"assessments": [], "overall_summary": "test"}', Mock())

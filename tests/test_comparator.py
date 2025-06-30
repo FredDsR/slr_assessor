@@ -8,43 +8,10 @@ from slr_assessor.core.comparator import (
 from slr_assessor.models import ConflictReport, EvaluationResult
 
 
-def test_identify_conflicts_no_conflicts():
+def test_identify_conflicts_no_conflicts(sample_high_score_evaluation):
     """Test when there are no conflicts between evaluations."""
-    eval1 = [
-        EvaluationResult(
-            id="paper_001",
-            title="Paper 1",
-            abstract="Abstract 1",
-            qa1_score=1.0,
-            qa1_reason="Good",
-            qa2_score=1.0,
-            qa2_reason="Good",
-            qa3_score=1.0,
-            qa3_reason="Good",
-            qa4_score=1.0,
-            qa4_reason="Good",
-            total_score=4.0,
-            decision="Include",
-        )
-    ]
-
-    eval2 = [
-        EvaluationResult(
-            id="paper_001",
-            title="Paper 1",
-            abstract="Abstract 1",
-            qa1_score=1.0,
-            qa1_reason="Good",
-            qa2_score=1.0,
-            qa2_reason="Good",
-            qa3_score=1.0,
-            qa3_reason="Good",
-            qa4_score=1.0,
-            qa4_reason="Good",
-            total_score=4.0,
-            decision="Include",
-        )
-    ]
+    eval1 = [sample_high_score_evaluation]
+    eval2 = [sample_high_score_evaluation]
 
     conflicts, decisions1, decisions2 = identify_conflicts(eval1, eval2)
 
@@ -146,72 +113,16 @@ def test_identify_conflicts_score_conflict_same_decision():
     assert conflicts[0].decision_2 == "Include"
 
 
-def test_identify_conflicts_multiple_papers():
+def test_identify_conflicts_multiple_papers(sample_high_score_evaluation, sample_low_score_evaluation, sample_mixed_score_evaluation):
     """Test multiple papers with some conflicts."""
     eval1 = [
-        EvaluationResult(
-            id="paper_001",
-            title="Paper 1",
-            abstract="Abstract 1",
-            qa1_score=1.0,
-            qa1_reason="Good",
-            qa2_score=1.0,
-            qa2_reason="Good",
-            qa3_score=1.0,
-            qa3_reason="Good",
-            qa4_score=1.0,
-            qa4_reason="Good",
-            total_score=4.0,
-            decision="Include",
-        ),
-        EvaluationResult(
-            id="paper_002",
-            title="Paper 2",
-            abstract="Abstract 2",
-            qa1_score=0.0,
-            qa1_reason="Poor",
-            qa2_score=0.0,
-            qa2_reason="Poor",
-            qa3_score=0.0,
-            qa3_reason="Poor",
-            qa4_score=0.0,
-            qa4_reason="Poor",
-            total_score=0.0,
-            decision="Exclude",
-        ),
+        sample_high_score_evaluation,
+        sample_low_score_evaluation,
     ]
 
     eval2 = [
-        EvaluationResult(
-            id="paper_001",
-            title="Paper 1",
-            abstract="Abstract 1",
-            qa1_score=1.0,
-            qa1_reason="Good",
-            qa2_score=1.0,
-            qa2_reason="Good",
-            qa3_score=1.0,
-            qa3_reason="Good",
-            qa4_score=1.0,
-            qa4_reason="Good",
-            total_score=4.0,
-            decision="Include",
-        ),
-        EvaluationResult(
-            id="paper_002",
-            title="Paper 2",
-            abstract="Abstract 2",
-            qa1_score=1.0,
-            qa1_reason="Good",
-            qa2_score=1.0,
-            qa2_reason="Good",
-            qa3_score=0.5,
-            qa3_reason="Okay",
-            qa4_score=0.0,
-            qa4_reason="Poor",
-            total_score=2.5,
-            decision="Include",
-        ),
+        sample_high_score_evaluation,
+        sample_mixed_score_evaluation,
     ]
 
     conflicts, decisions1, decisions2 = identify_conflicts(eval1, eval2)

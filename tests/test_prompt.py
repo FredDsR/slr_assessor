@@ -68,22 +68,18 @@ def test_assessment_prompt_template_scoring_instructions():
     assert "satisfies" in ASSESSMENT_PROMPT_TEMPLATE.lower()
 
 
-def test_format_assessment_prompt_basic():
+def test_format_assessment_prompt_basic(sample_paper):
     """Test basic prompt formatting with sample abstract."""
-    abstract = "This is a sample abstract for testing purposes."
-
-    formatted_prompt = format_assessment_prompt(abstract)
+    formatted_prompt = format_assessment_prompt(sample_paper.abstract)
 
     assert isinstance(formatted_prompt, str)
-    assert abstract in formatted_prompt
+    assert sample_paper.abstract in formatted_prompt
     assert len(formatted_prompt) > len(ASSESSMENT_PROMPT_TEMPLATE)
 
 
-def test_format_assessment_prompt_all_placeholders_replaced():
+def test_format_assessment_prompt_all_placeholders_replaced(sample_paper):
     """Test that all placeholders are replaced in formatted prompt."""
-    abstract = "Sample abstract text."
-
-    formatted_prompt = format_assessment_prompt(abstract)
+    formatted_prompt = format_assessment_prompt(sample_paper.abstract)
 
     # Check that original placeholders are not present
     assert "{abstract_text}" not in formatted_prompt
@@ -93,11 +89,9 @@ def test_format_assessment_prompt_all_placeholders_replaced():
     assert "{qa4_question}" not in formatted_prompt
 
 
-def test_format_assessment_prompt_qa_questions_included():
+def test_format_assessment_prompt_qa_questions_included(sample_paper):
     """Test that all QA questions are included in formatted prompt."""
-    abstract = "Sample abstract text."
-
-    formatted_prompt = format_assessment_prompt(abstract)
+    formatted_prompt = format_assessment_prompt(sample_paper.abstract)
 
     for question in QA_QUESTIONS.values():
         assert question in formatted_prompt

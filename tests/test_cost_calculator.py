@@ -135,14 +135,14 @@ def test_calculate_cost_anthropic_model():
 
 @patch("slr_assessor.llm.prompt.format_assessment_prompt")
 @patch("slr_assessor.utils.cost_calculator.estimate_tokens")
-def test_estimate_screening_cost_basic(mock_estimate_tokens, mock_format_prompt):
+def test_estimate_screening_cost_basic(mock_estimate_tokens, mock_format_prompt, sample_paper):
     """Test basic screening cost estimation."""
     mock_format_prompt.return_value = "formatted prompt"
     mock_estimate_tokens.return_value = 800  # input tokens
 
     estimate = estimate_screening_cost(
         num_papers=10,
-        sample_abstract="test abstract",
+        sample_abstract=sample_paper.abstract,
         provider="openai",
         model="gpt-4"
     )
@@ -160,14 +160,14 @@ def test_estimate_screening_cost_basic(mock_estimate_tokens, mock_format_prompt)
 
 @patch("slr_assessor.llm.prompt.format_assessment_prompt")
 @patch("slr_assessor.utils.cost_calculator.estimate_tokens")
-def test_estimate_screening_cost_unknown_model(mock_estimate_tokens, mock_format_prompt):
+def test_estimate_screening_cost_unknown_model(mock_estimate_tokens, mock_format_prompt, sample_paper):
     """Test screening cost estimation for unknown model."""
     mock_format_prompt.return_value = "formatted prompt"
     mock_estimate_tokens.return_value = 800
 
     estimate = estimate_screening_cost(
         num_papers=5,
-        sample_abstract="test abstract",
+        sample_abstract=sample_paper.abstract,
         provider="unknown",
         model="unknown-model"
     )
@@ -178,14 +178,14 @@ def test_estimate_screening_cost_unknown_model(mock_estimate_tokens, mock_format
 
 @patch("slr_assessor.llm.prompt.format_assessment_prompt")
 @patch("slr_assessor.utils.cost_calculator.estimate_tokens")
-def test_estimate_screening_cost_zero_papers(mock_estimate_tokens, mock_format_prompt):
+def test_estimate_screening_cost_zero_papers(mock_estimate_tokens, mock_format_prompt, sample_paper):
     """Test screening cost estimation for zero papers."""
     mock_format_prompt.return_value = "formatted prompt"
     mock_estimate_tokens.return_value = 800
 
     estimate = estimate_screening_cost(
         num_papers=0,
-        sample_abstract="test abstract",
+        sample_abstract=sample_paper.abstract,
         provider="openai",
         model="gpt-4"
     )
@@ -196,14 +196,14 @@ def test_estimate_screening_cost_zero_papers(mock_estimate_tokens, mock_format_p
 
 @patch("slr_assessor.llm.prompt.format_assessment_prompt")
 @patch("slr_assessor.utils.cost_calculator.estimate_tokens")
-def test_estimate_screening_cost_large_batch(mock_estimate_tokens, mock_format_prompt):
+def test_estimate_screening_cost_large_batch(mock_estimate_tokens, mock_format_prompt, sample_paper):
     """Test screening cost estimation for large batch."""
     mock_format_prompt.return_value = "formatted prompt"
     mock_estimate_tokens.return_value = 1000
 
     estimate = estimate_screening_cost(
         num_papers=1000,
-        sample_abstract="test abstract",
+        sample_abstract=sample_paper.abstract,
         provider="gemini",
         model="gemini-2.5-flash"
     )

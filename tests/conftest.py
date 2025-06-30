@@ -284,3 +284,63 @@ def sample_backup_session():
         processed_paper_ids=[],
         last_updated="2025-01-01T10:00:00",
     )
+
+
+@pytest.fixture
+def sample_high_score_evaluation():
+    """Create a sample evaluation result with high scores for testing."""
+    return EvaluationResult(
+        id="paper_001",
+        title="High Score Paper",
+        abstract="This paper has high scores.",
+        qa1_score=1.0,
+        qa1_reason="Excellent relevance.",
+        qa2_score=1.0,
+        qa2_reason="Perfect methodology.",
+        qa3_score=1.0,
+        qa3_reason="Strong design.",
+        qa4_score=1.0,
+        qa4_reason="Ideal scope.",
+        total_score=4.0,
+        decision="Include",
+    )
+
+
+@pytest.fixture
+def sample_low_score_evaluation():
+    """Create a sample evaluation result with low scores for testing."""
+    return EvaluationResult(
+        id="paper_002",
+        title="Low Score Paper",
+        abstract="This paper has low scores.",
+        qa1_score=0.0,
+        qa1_reason="Not relevant.",
+        qa2_score=0.0,
+        qa2_reason="Poor methodology.",
+        qa3_score=0.0,
+        qa3_reason="Weak design.",
+        qa4_score=0.0,
+        qa4_reason="Out of scope.",
+        total_score=0.0,
+        decision="Exclude",
+    )
+
+
+@pytest.fixture
+def sample_mixed_score_evaluation():
+    """Create a sample evaluation result with mixed scores for testing."""
+    return EvaluationResult(
+        id="paper_002",
+        title="Mixed Score Paper",
+        abstract="This paper has mixed scores.",
+        qa1_score=1.0,
+        qa1_reason="Good relevance.",
+        qa2_score=1.0,
+        qa2_reason="Good methodology.",
+        qa3_score=0.5,
+        qa3_reason="Okay design.",
+        qa4_score=0.0,
+        qa4_reason="Limited scope.",
+        total_score=2.5,
+        decision="Include",
+    )
