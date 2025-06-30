@@ -13,6 +13,7 @@ from .core.evaluator import create_evaluation_result
 from .llm.prompt import format_assessment_prompt
 from .llm.providers import create_provider, parse_llm_response
 from .models import EvaluationResult
+from .utils.backup import BackupManager
 from .utils.cost_calculator import (
     estimate_screening_cost,
 )
@@ -53,6 +54,11 @@ def screen(
     usage_report: Optional[str] = typer.Option(
         None, "--usage-report", help="Path to save usage report JSON"
     ),
+    backup_file: Optional[str] = typer.Option(
+        None,
+        "--backup-file",
+        help="Path to backup file for persistent processing (resumes from previous session)",
+    ),
 ):
     """Screen papers using an LLM provider."""
     try:
@@ -63,85 +69,179 @@ def screen(
 
         # Create LLM provider
         console.print(f"[blue]Initializing {provider} provider...[/blue]")
-        llm_provider = create_provider(provider, api_key, model=model)
+        llm_provider = create_provider(provider, api_key, model)
 
         # Initialize usage tracker
         if not model:
             model = getattr(llm_provider, "model", "unknown")
-        tracker = UsageTracker(provider, model)
+        tracker = UsageTracker(provider, model or "unknown")
+
+        # Initialize backup manager if backup file is specified
+        backup_manager = None
+        all_evaluations = []
+
+        if backup_file:
+            console.print(
+                f"[blue]Initializing backup manager with {backup_file}...[/blue]"
+            )
+            backup_manager = BackupManager(backup_file)
+            backup_manager.load_or_create_session(
+                provider=provider,
+                model=model or "unknown",
+                input_csv_path=input_csv,
+                output_csv_path=output,
+                total_papers=len(papers),
+            )
+
+            # Get already processed papers
+            processed_papers = backup_manager.get_processed_papers()
+            all_evaluations.extend(processed_papers)
+
+            # Get remaining papers to process
+            remaining_papers = backup_manager.get_remaining_papers(papers)
+
+            if len(processed_papers) > 0:
+                progress_info = backup_manager.get_progress_info()
+                failed_count = progress_info.get("failed", 0)
+                console.print(
+                    f"[green]Resuming from backup: {progress_info['processed']}/{progress_info['total']} papers completed ({progress_info['percentage']:.1f}%)[/green]"
+                )
+                if failed_count > 0:
+                    console.print(
+                        f"[yellow]⚠ {failed_count} papers failed previously and will be retried[/yellow]"
+                    )
+
+            papers_to_process = remaining_papers
+        else:
+            papers_to_process = papers
 
         # Process each paper
-        evaluations = []
-        for paper in track(papers, description="Screening papers..."):
-            try:
-                # Format prompt
-                prompt = format_assessment_prompt(paper.abstract)
+        if len(papers_to_process) == 0:
+            console.print("[green]✓ All papers already processed![/green]")
+        else:
+            console.print(
+                f"[blue]Processing {len(papers_to_process)} remaining papers...[/blue]"
+            )
 
-                # Get LLM assessment with token usage
-                response, token_usage = llm_provider.get_assessment(prompt)
-                assessment = parse_llm_response(response)
+            for paper in track(papers_to_process, description="Screening papers..."):
+                try:
+                    # Format prompt
+                    prompt = format_assessment_prompt(paper.abstract)
 
-                # Track usage
-                tracker.add_usage(token_usage)
+                    # Get LLM assessment with token usage
+                    response, token_usage = llm_provider.get_assessment(prompt)
+                    assessment = parse_llm_response(response)
 
-                # Convert to evaluation result
-                qa_scores = {}
-                qa_reasons = {}
-                for qa_item in assessment.assessments:
-                    qa_id = qa_item.qa_id.lower()
-                    qa_scores[qa_id] = qa_item.score
-                    qa_reasons[qa_id] = qa_item.reason
+                    # Track usage
+                    tracker.add_usage(token_usage)
 
-                evaluation = create_evaluation_result(
-                    paper_id=paper.id,
-                    title=paper.title,
-                    abstract=paper.abstract,
-                    qa_scores=qa_scores,
-                    qa_reasons=qa_reasons,
-                    llm_summary=assessment.overall_summary,
-                )
+                    # Convert to evaluation result
+                    qa_scores = {}
+                    qa_reasons = {}
+                    for qa_item in assessment.assessments:
+                        qa_id = qa_item.qa_id.lower()
+                        qa_scores[qa_id] = qa_item.score
+                        qa_reasons[qa_id] = qa_item.reason
 
-                # Add token usage to evaluation
-                evaluation.token_usage = token_usage
+                    evaluation = create_evaluation_result(
+                        paper_id=paper.id,
+                        title=paper.title,
+                        abstract=paper.abstract,
+                        qa_scores=qa_scores,
+                        qa_reasons=qa_reasons,
+                        llm_summary=assessment.overall_summary,
+                    )
 
-            except Exception as e:
-                # Create evaluation with error
-                console.print(f"[red]Error processing paper {paper.id}: {str(e)}[/red]")
-                tracker.add_failure()
+                    # Add token usage to evaluation
+                    evaluation.token_usage = token_usage
 
-                evaluation = EvaluationResult(
-                    id=paper.id,
-                    title=paper.title,
-                    abstract=paper.abstract,
-                    qa1_score=0.0,
-                    qa1_reason="Error during processing",
-                    qa2_score=0.0,
-                    qa2_reason="Error during processing",
-                    qa3_score=0.0,
-                    qa3_reason="Error during processing",
-                    qa4_score=0.0,
-                    qa4_reason="Error during processing",
-                    total_score=0.0,
-                    decision="Exclude",
-                    error=str(e),
-                )
+                    # Add to evaluations list
+                    all_evaluations.append(evaluation)
 
-            evaluations.append(evaluation)
+                    # Save to backup if enabled
+                    if backup_manager:
+                        backup_manager.add_processed_paper(evaluation)
+
+                        # Update usage tracker data in backup
+                        report = tracker.get_report()
+                        backup_manager.update_usage_tracker_data(
+                            {
+                                "total_papers_processed": report.total_papers_processed,
+                                "successful_papers": report.successful_papers,
+                                "failed_papers": report.failed_papers,
+                                "total_input_tokens": report.total_input_tokens,
+                                "total_output_tokens": report.total_output_tokens,
+                                "total_cost": float(report.total_cost),
+                            }
+                        )
+
+                except Exception as e:
+                    # Create evaluation with error
+                    console.print(
+                        f"[red]Error processing paper {paper.id}: {str(e)}[/red]"
+                    )
+                    tracker.add_failure()
+
+                    evaluation = EvaluationResult(
+                        id=paper.id,
+                        title=paper.title,
+                        abstract=paper.abstract,
+                        qa1_score=0.0,
+                        qa1_reason="Error during processing",
+                        qa2_score=0.0,
+                        qa2_reason="Error during processing",
+                        qa3_score=0.0,
+                        qa3_reason="Error during processing",
+                        qa4_score=0.0,
+                        qa4_reason="Error during processing",
+                        total_score=0.0,
+                        decision="Exclude",
+                        error=str(e),
+                    )
+
+                    all_evaluations.append(evaluation)
+
+                    # Update usage tracker data in backup but DO NOT mark paper as processed
+                    # Failed papers should be retried in subsequent runs
+                    if backup_manager:
+                        backup_manager.add_failed_paper(evaluation)
+                        report = tracker.get_report()
+                        backup_manager.update_usage_tracker_data(
+                            {
+                                "total_papers_processed": report.total_papers_processed,
+                                "successful_papers": report.successful_papers,
+                                "failed_papers": report.failed_papers,
+                                "total_input_tokens": report.total_input_tokens,
+                                "total_output_tokens": report.total_output_tokens,
+                                "total_cost": float(report.total_cost),
+                            }
+                        )
+                        console.print(
+                            "[yellow]⚠ Backup updated. Failed paper will be retried on resume:[/yellow]"
+                        )
+                        console.print(
+                            f"[yellow]  slr-assessor screen {input_csv} --provider {provider} --output {output} --backup-file {backup_file}[/yellow]"
+                        )
+
+                    console.print(
+                        f"[red]Stopping due to error in paper {paper.id}[/red]"
+                    )
+                    raise typer.Exit(1) from e
 
         # Finish tracking
         tracker.finish_session()
 
         # Write results to CSV
         console.print(f"[blue]Writing results to {output}...[/blue]")
-        write_evaluations_to_csv(evaluations, output)
+        write_evaluations_to_csv(all_evaluations, output)
 
         # Summary
-        include_count = sum(1 for e in evaluations if e.decision == "Include")
-        exclude_count = sum(1 for e in evaluations if e.decision == "Exclude")
+        include_count = sum(1 for e in all_evaluations if e.decision == "Include")
+        exclude_count = sum(1 for e in all_evaluations if e.decision == "Exclude")
         conditional_count = sum(
-            1 for e in evaluations if e.decision == "Conditional Review"
+            1 for e in all_evaluations if e.decision == "Conditional Review"
         )
-        error_count = sum(1 for e in evaluations if e.error is not None)
+        error_count = sum(1 for e in all_evaluations if e.error is not None)
 
         console.print("\n[green]✓ Screening complete![/green]")
         console.print(
@@ -159,6 +259,14 @@ def screen(
         if usage_report:
             tracker.save_report(usage_report)
             console.print(f"[blue]💾 Usage report saved to {usage_report}[/blue]")
+
+        # Clean up backup file if all papers processed successfully
+        if backup_manager and len(papers_to_process) > 0 and error_count == 0:
+            progress_info = backup_manager.get_progress_info()
+            if progress_info["processed"] >= progress_info["total"]:
+                console.print(
+                    f"[green]✓ All papers processed successfully. Backup preserved at: {backup_file}[/green]"
+                )
 
     except Exception as e:
         console.print(f"[red]Error: {str(e)}[/red]")

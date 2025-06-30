@@ -1,7 +1,8 @@
 """Pydantic data models for the SLR Assessor CLI."""
 
+from datetime import datetime
 from decimal import Decimal
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel
 
@@ -19,7 +20,7 @@ class QAResponseItem(BaseModel):
 
     qa_id: str
     question: str
-    score: Literal[0, 0.5, 1]
+    score: Union[Literal[0], Literal[1], float]  # 0, 0.5, or 1
     reason: str
 
 
@@ -122,3 +123,63 @@ class ConflictReport(BaseModel):
     total_conflicts: int
     cohen_kappa_score: float
     conflicts: list[Conflict]
+
+
+class BackupSession(BaseModel):
+    """Backup session data for persistent screening."""
+
+    session_id: str
+    start_time: str
+    provider: str
+    model: str
+    input_csv_path: str
+    output_csv_path: str
+    total_papers: int
+    processed_papers: list[EvaluationResult] = []
+    failed_papers: list[EvaluationResult] = []  # Track failed papers separately
+    processed_paper_ids: list[
+        str
+    ] = []  # Changed from set to list for JSON serialization
+    usage_tracker_data: Optional[dict] = None
+    last_updated: str
+
+    def model_post_init(self, __context) -> None:
+        """Update processed_paper_ids after model initialization."""
+        # Convert list back to set for operations, but keep list for serialization
+        if isinstance(self.processed_paper_ids, list):
+            self._processed_paper_ids_set = set(self.processed_paper_ids)
+        else:
+            self._processed_paper_ids_set = set()
+            self.processed_paper_ids = []
+
+        # Update from processed_papers if needed
+        for eval_result in self.processed_papers:
+            if eval_result.id not in self._processed_paper_ids_set:
+                self._processed_paper_ids_set.add(eval_result.id)
+                self.processed_paper_ids.append(eval_result.id)
+
+    def add_processed_paper(self, evaluation: EvaluationResult) -> None:
+        """Add a processed paper to the backup."""
+        if not hasattr(self, "_processed_paper_ids_set"):
+            self._processed_paper_ids_set = set(self.processed_paper_ids)
+
+        if evaluation.id not in self._processed_paper_ids_set:
+            self.processed_papers.append(evaluation)
+            self._processed_paper_ids_set.add(evaluation.id)
+            self.processed_paper_ids.append(evaluation.id)
+            self.last_updated = datetime.now().isoformat()
+
+    def add_failed_paper(self, evaluation: EvaluationResult) -> None:
+        """Add a failed paper to the backup (for tracking but not marking as processed)."""
+        self.failed_papers.append(evaluation)
+        self.last_updated = datetime.now().isoformat()
+
+    def is_paper_processed(self, paper_id: str) -> bool:
+        """Check if a paper has already been processed."""
+        if not hasattr(self, "_processed_paper_ids_set"):
+            self._processed_paper_ids_set = set(self.processed_paper_ids)
+        return paper_id in self._processed_paper_ids_set
+
+    def get_remaining_papers(self, all_papers: list) -> list:
+        """Get list of papers that haven't been processed yet."""
+        return [paper for paper in all_papers if not self.is_paper_processed(paper.id)]

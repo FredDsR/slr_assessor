@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Protocol, runtime_checkable
+from typing import Optional, Protocol, runtime_checkable
 
 from ..models import LLMAssessment, TokenUsage
 
@@ -26,7 +26,7 @@ class LLMProvider(Protocol):
 class OpenAIProvider:
     """OpenAI GPT provider implementation."""
 
-    def __init__(self, model: str, api_key: str = None):
+    def __init__(self, model: str, api_key: Optional[str] = None):
         """Initialize OpenAI provider.
 
         Args:
@@ -99,7 +99,7 @@ class OpenAIProvider:
 class GeminiProvider:
     """Google Gemini provider implementation."""
 
-    def __init__(self, model: str, api_key: str = None):
+    def __init__(self, model: str, api_key: Optional[str] = None):
         """Initialize Gemini provider.
 
         Args:
@@ -171,7 +171,7 @@ class GeminiProvider:
 class AnthropicProvider:
     """Anthropic Claude provider implementation."""
 
-    def __init__(self, model: str, api_key: str = None):
+    def __init__(self, model: str, api_key: Optional[str] = None):
         """Initialize Anthropic provider.
 
         Args:
@@ -236,7 +236,7 @@ class AnthropicProvider:
 
 
 def create_provider(
-    provider_name: str, api_key: str = None, model: str = None
+    provider_name: str, api_key: Optional[str] = None, model: Optional[str] = None
 ) -> LLMProvider:
     """Factory function to create LLM providers.
 

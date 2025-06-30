@@ -17,6 +17,7 @@ slr-assessor screen papers.csv --provider openai --output results.csv
 - `--model`: Specify model (e.g., `gpt-4`, `gemini-2.5-flash`)
 - `--output`: Output CSV file path
 - `--usage-report`: Save usage statistics to JSON file
+- `--backup-file`: Enable persistent processing with backup file
 
 **Examples:**
 ```bash
@@ -30,12 +31,25 @@ slr-assessor screen papers.csv \
   --output results.csv \
   --usage-report usage.json
 
+# With backup for persistent processing (resumes automatically if interrupted)
+slr-assessor screen papers.csv \
+  --provider openai \
+  --output results.csv \
+  --backup-file session_backup.json
+
 # Using Anthropic Claude
 slr-assessor screen papers.csv \
   --provider anthropic \
   --model claude-3-sonnet-20240229 \
   --output results.csv
 ```
+
+**💾 Backup Feature:**
+- Use `--backup-file` to enable persistent processing
+- Automatically resumes from previous session if interrupted
+- Saves progress after each successfully processed paper
+- Never lose work due to errors, network issues, or interruptions
+- See [Backup Feature Guide](backup_feature.md) for detailed documentation
 
 ### `process-human` - Process Human Evaluations
 
@@ -117,7 +131,7 @@ paper_002,"Machine Learning Models","We present novel machine learning approache
 
 Required columns for human evaluation processing:
 - `id`: Paper identifier
-- `title`: Paper title  
+- `title`: Paper title
 - `abstract`: Paper abstract
 - `qa1_score`: Score for QA1 (0, 0.5, or 1)
 - `qa1_reason`: Reasoning for QA1 score
