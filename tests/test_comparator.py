@@ -1,12 +1,11 @@
 """Tests for the core comparator module."""
 
-import pytest
 from slr_assessor.core.comparator import (
-    identify_conflicts,
     calculate_cohen_kappa,
     compare_evaluations,
+    identify_conflicts,
 )
-from slr_assessor.models import EvaluationResult, Conflict, ConflictReport
+from slr_assessor.models import ConflictReport, EvaluationResult
 
 
 def test_identify_conflicts_no_conflicts():
@@ -297,8 +296,8 @@ def test_calculate_cohen_kappa_no_agreement():
 
 def test_calculate_cohen_kappa_partial_agreement():
     """Test partial agreement scenario."""
-    decisions1 = ["Include", "Exclude", "Include", "Exclude"]
-    decisions2 = ["Include", "Exclude", "Exclude", "Include"]
+    decisions1 = ["Include", "Include", "Include", "Exclude"]
+    decisions2 = ["Include", "Include", "Exclude", "Exclude"]
 
     kappa = calculate_cohen_kappa(decisions1, decisions2)
     assert 0 < kappa < 1

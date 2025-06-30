@@ -72,9 +72,29 @@ def calculate_cohen_kappa(decisions1: list[str], decisions2: list[str]) -> float
     if len(decisions1) == 0:
         return 0.0
 
+    # Handle single item case
+    if len(decisions1) == 1:
+        return 1.0 if decisions1[0] == decisions2[0] else 0.0
+
+    # Handle perfect agreement case
+    if decisions1 == decisions2:
+        return 1.0
+
+    # Handle all same labels case (e.g., all "Include")
+    unique_1 = set(decisions1)
+    unique_2 = set(decisions2)
+    if len(unique_1) == 1 and len(unique_2) == 1:
+        if unique_1 == unique_2:
+            return 1.0  # Perfect agreement
+        else:
+            return -1.0  # Complete disagreement
+
     # Use scikit-learn's cohen_kappa_score function
     try:
         kappa = cohen_kappa_score(decisions1, decisions2)
+        # Handle NaN cases
+        if kappa != kappa:  # Check for NaN
+            return 0.0
         return kappa
     except Exception:
         # Fallback to 0.0 if calculation fails

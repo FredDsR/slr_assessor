@@ -226,7 +226,6 @@ When contributing new tests:
 
 The slr_assessor test suite follows these principles:
 
-- **Function-based testing** - Tests are organized as bare functions rather than classes for simplicity and clarity
 - **Descriptive naming** - Test function names clearly describe what is being tested
 - **Arrange-Act-Assert** - Tests follow the AAA pattern for clarity
 - **Isolation** - Each test is independent and can run in any order

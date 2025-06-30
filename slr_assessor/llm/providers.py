@@ -5,6 +5,7 @@ import os
 from typing import Optional, Protocol, runtime_checkable
 
 from ..models import LLMAssessment, TokenUsage
+from ..utils.cost_calculator import calculate_cost
 
 
 @runtime_checkable
@@ -44,7 +45,6 @@ class OpenAIProvider:
         # Import here to make it optional
         try:
             import openai
-
             self.client = openai.OpenAI(api_key=self.api_key)
         except ImportError:
             raise ImportError(
@@ -117,7 +117,6 @@ class GeminiProvider:
         # Import here to make it optional
         try:
             import google.generativeai as genai
-
             genai.configure(api_key=self.api_key)
             self.client = genai.GenerativeModel(self.model)
         except ImportError:
@@ -189,7 +188,6 @@ class AnthropicProvider:
         # Import here to make it optional
         try:
             import anthropic
-
             self.client = anthropic.Anthropic(api_key=self.api_key)
         except ImportError:
             raise ImportError(

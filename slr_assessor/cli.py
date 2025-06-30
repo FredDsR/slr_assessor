@@ -316,7 +316,7 @@ def compare(
         None, "-o", "--output", help="Path to save detailed conflict report JSON"
     ),
 ):
-    """Compare two evaluation files and report conflicts."""
+    """Compare two evaluation results and report conflicts."""
     try:
         # Read evaluation files
         console.print(f"[blue]Reading evaluations from {evaluation_file_1}...[/blue]")
@@ -382,7 +382,7 @@ def estimate_cost(
         None, "--model", help="Specific model to use (optional)"
     ),
 ):
-    """Estimate cost for screening papers with an LLM provider."""
+    """Estimate screening costs for papers with an LLM provider."""
     try:
         # Read papers from CSV
         console.print(f"[blue]Reading papers from {input_csv}...[/blue]")

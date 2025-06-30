@@ -88,12 +88,24 @@ class UsageTracker:
             filepath: Path to save the report
         """
         report = self.get_report()
+
+        # Convert the report to dict and handle Decimal serialization
+        report_data = report.model_dump()
+
+        # Convert Decimal values to strings for JSON serialization
+        def convert_decimals(obj):
+            if isinstance(obj, Decimal):
+                return str(obj)
+            elif isinstance(obj, dict):
+                return {k: convert_decimals(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_decimals(item) for item in obj]
+            return obj
+
+        serializable_data = convert_decimals(report_data)
+
         with open(filepath, "w") as f:
-            json.dump(
-                report.model_dump(default=str),  # Convert Decimal to str
-                f,
-                indent=2,
-            )
+            json.dump(serializable_data, f, indent=2)
 
     def print_summary(self, console) -> None:
         """Print usage summary to console.
@@ -141,9 +153,11 @@ def load_usage_report(filepath: str) -> UsageReport:
     with open(filepath) as f:
         data = json.load(f)
 
-    # Convert string costs back to Decimal
+    # Convert string costs back to Decimal, default to 0 if missing
     if "total_cost" in data:
         data["total_cost"] = Decimal(str(data["total_cost"]))
+    else:
+        data["total_cost"] = Decimal("0.0")
 
     for usage in data.get("paper_usages", []):
         if "estimated_cost" in usage and usage["estimated_cost"]:

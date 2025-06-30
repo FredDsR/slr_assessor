@@ -1,6 +1,7 @@
 """Tests for the core evaluator module."""
 
 import pytest
+
 from slr_assessor.core.evaluator import calculate_decision, create_evaluation_result
 
 

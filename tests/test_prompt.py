@@ -1,9 +1,8 @@
 """Tests for the LLM prompt module."""
 
-import pytest
 from slr_assessor.llm.prompt import (
-    QA_QUESTIONS,
     ASSESSMENT_PROMPT_TEMPLATE,
+    QA_QUESTIONS,
     format_assessment_prompt,
 )
 
