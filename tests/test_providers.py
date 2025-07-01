@@ -146,11 +146,11 @@ class TestGeminiProvider:
         original_import = __builtins__['__import__']
 
         def mock_import(name, *args, **kwargs):
-            if name == "google.generativeai":
-                mock_genai = Mock()
-                mock_genai.configure = Mock()
-                mock_genai.GenerativeModel.return_value = Mock()
-                return mock_genai
+            if name == "google":
+                mock_google = Mock()
+                mock_google.genai = Mock()
+                mock_google.genai.Client.return_value = Mock()
+                return mock_google
             return original_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=mock_import):
@@ -166,15 +166,15 @@ class TestGeminiProvider:
                 GeminiProvider(model="gemini-1.5-flash")
 
     def test_init_missing_genai_package(self):
-        """Test that missing google-generativeai package raises ImportError."""
-        # Create a side effect that raises ImportError for google.generativeai import
+        """Test that missing google-genai package raises ImportError."""
+        # Create a side effect that raises ImportError for google import
         def mock_import(name, *args, **kwargs):
-            if name == 'google.generativeai':
-                raise ImportError("No module named 'google.generativeai'")
+            if name == 'google':
+                raise ImportError("No module named 'google'")
             return __import__(name, *args, **kwargs)
 
         with patch('builtins.__import__', side_effect=mock_import):
-            with pytest.raises(ImportError, match="google-generativeai package not installed"):
+            with pytest.raises(ImportError, match="google-genai package not installed"):
                 GeminiProvider(model="gemini-1.5-flash", api_key="test-key")
 
     @patch("slr_assessor.utils.cost_calculator.estimate_tokens")

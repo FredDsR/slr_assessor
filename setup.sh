@@ -24,9 +24,9 @@ if [[ $install_openai == [Yy]* ]]; then
     uv add openai
 fi
 
-read -p "Google Gemini: " install_gemini  
+read -p "Google Gemini: " install_gemini
 if [[ $install_gemini == [Yy]* ]]; then
-    uv add google-generativeai
+    uv add google-genai
 fi
 
 read -p "Anthropic Claude: " install_anthropic
@@ -47,7 +47,7 @@ echo "✅ Setup complete!"
 echo ""
 echo "Next steps:"
 echo "1. Edit .env file and add your API keys"
-echo "2. Activate the environment: source .venv/bin/activate" 
+echo "2. Activate the environment: source .venv/bin/activate"
 echo "3. Test the installation: uv run slr-assessor --help"
 echo ""
 echo "Example usage:"
