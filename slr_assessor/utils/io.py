@@ -171,6 +171,12 @@ def read_evaluations_from_csv(csv_path: str) -> list[EvaluationResult]:
             error=str(row["error"])
             if "error" in row and pd.notna(row["error"])
             else None,
+            prompt_version=str(row["prompt_version"])
+            if "prompt_version" in row and pd.notna(row["prompt_version"])
+            else "v1.0",
+            prompt_hash=str(row["prompt_hash"])
+            if "prompt_hash" in row and pd.notna(row["prompt_hash"])
+            else None,
         )
         evaluations.append(evaluation)
 
@@ -205,6 +211,8 @@ def write_evaluations_to_csv(
                 "decision",
                 "llm_summary",
                 "error",
+                "prompt_version",
+                "prompt_hash",
                 "input_tokens",
                 "output_tokens",
                 "total_tokens",
@@ -233,6 +241,8 @@ def write_evaluations_to_csv(
                 "decision": eval_result.decision,
                 "llm_summary": eval_result.llm_summary,
                 "error": eval_result.error,
+                "prompt_version": getattr(eval_result, 'prompt_version', 'v1.0'),
+                "prompt_hash": getattr(eval_result, 'prompt_hash', None),
             }
 
             # Add token usage information if available

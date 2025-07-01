@@ -50,6 +50,8 @@ def identify_conflicts(
                     total_score_1=result1.total_score,
                     total_score_2=result2.total_score,
                     score_difference=score_diff,
+                    prompt_version_1=getattr(result1, 'prompt_version', 'unknown'),
+                    prompt_version_2=getattr(result2, 'prompt_version', 'unknown'),
                 )
             )
 
@@ -121,4 +123,10 @@ def compare_evaluations(
         total_conflicts=len(conflicts),
         cohen_kappa_score=kappa_score,
         conflicts=conflicts,
+        metadata={
+            "prompt_versions": {
+                "eval1": list(set(getattr(e, 'prompt_version', 'unknown') for e in eval1)),
+                "eval2": list(set(getattr(e, 'prompt_version', 'unknown') for e in eval2))
+            }
+        }
     )

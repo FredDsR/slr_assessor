@@ -45,6 +45,9 @@ def screen(
     output: str = typer.Option(
         ..., "-o", "--output", help="Path to save evaluation results CSV"
     ),
+    prompt_version: str = typer.Option(
+        "v1.0", "--prompt-version", help="Prompt version to use"
+    ),
     model: Optional[str] = typer.Option(
         None, "--model", help="Specific model to use (optional)"
     ),
@@ -60,8 +63,22 @@ def screen(
         help="Path to backup file for persistent processing (resumes from previous session)",
     ),
 ):
-    """Screen papers using an LLM provider."""
+    """Screen papers using an LLM provider with specified prompt version."""
     try:
+        # Initialize prompt manager
+        from .llm.prompt_manager import PromptManager
+        prompt_manager = PromptManager()
+
+        # Validate prompt version
+        try:
+            prompt_manager.get_version(prompt_version)
+        except ValueError as e:
+            console.print(f"[red]Error: {e}[/red]")
+            console.print(f"[blue]Available versions: {[v.version for v in prompt_manager.list_versions()]}[/blue]")
+            raise typer.Exit(1)
+
+        console.print(f"[blue]Using prompt version: {prompt_version}[/blue]")
+
         # Read papers from CSV
         console.print(f"[blue]Reading papers from {input_csv}...[/blue]")
         papers = read_papers_from_csv(input_csv)
@@ -125,8 +142,8 @@ def screen(
 
             for paper in track(papers_to_process, description="Screening papers..."):
                 try:
-                    # Format prompt
-                    prompt = format_assessment_prompt(paper.abstract)
+                    # Format prompt using prompt manager
+                    prompt = prompt_manager.format_prompt(prompt_version, paper.abstract)
 
                     # Get LLM assessment with token usage
                     response, token_usage = llm_provider.get_assessment(prompt)
@@ -150,6 +167,8 @@ def screen(
                         qa_scores=qa_scores,
                         qa_reasons=qa_reasons,
                         llm_summary=assessment.overall_summary,
+                        prompt_version=prompt_version,
+                        prompt_hash=prompt_manager.get_prompt_hash(prompt_version),
                     )
 
                     # Add token usage to evaluation
@@ -197,6 +216,8 @@ def screen(
                         total_score=0.0,
                         decision="Exclude",
                         error=str(e),
+                        prompt_version=prompt_version,
+                        prompt_hash=prompt_manager.get_prompt_hash(prompt_version),
                     )
 
                     all_evaluations.append(evaluation)
@@ -586,6 +607,157 @@ def analyze_usage(
         console.print(f"[red]Error: {str(e)}[/red]")
         raise typer.Exit(1) from e
 
+
+@app.command()
+def list_prompts():
+    """List all available prompt versions."""
+    from .llm.prompt_manager import PromptManager
+
+    prompt_manager = PromptManager()
+
+    built_in_versions = prompt_manager.get_built_in_versions()
+    custom_versions = prompt_manager.get_custom_versions()
+
+    if built_in_versions:
+        console.print("\n[bold green]Built-in Prompt Versions:[/bold green]")
+        for version in built_in_versions:
+            console.print(f"  [bold]{version.version}[/bold] - {version.name}")
+            console.print(f"    {version.description}")
+            console.print(f"    Created: {version.created_date}")
+
+    if custom_versions:
+        console.print("\n[bold blue]Custom Prompt Versions:[/bold blue]")
+        for version in custom_versions:
+            console.print(f"  [bold]{version.version}[/bold] - {version.name}")
+            console.print(f"    {version.description}")
+            console.print(f"    Created: {version.created_date}")
+
+    if not built_in_versions and not custom_versions:
+        console.print("[yellow]No prompt versions found[/yellow]")
+
+
+@app.command()
+def show_prompt(
+    version: str = typer.Argument(..., help="Prompt version to display"),
+    show_template: bool = typer.Option(False, "--template", help="Show full prompt template")
+):
+    """Show details of a specific prompt version."""
+    from .llm.prompt_manager import PromptManager
+
+    try:
+        prompt_manager = PromptManager()
+        prompt_version = prompt_manager.get_version(version)
+
+        console.print(f"\n[bold]Prompt Version: {prompt_version.version}[/bold]")
+        console.print(f"Name: {prompt_version.name}")
+        console.print(f"Description: {prompt_version.description}")
+        console.print(f"Created: {prompt_version.created_date}")
+        console.print(f"Active: {'Yes' if prompt_version.is_active else 'No'}")
+
+        console.print("\n[bold]Assessment Questions:[/bold]")
+        for qa_key, question in prompt_version.qa_questions.items():
+            console.print(f"  {qa_key}: {question}")
+
+        if show_template:
+            console.print("\n[bold]Prompt Template:[/bold]")
+            console.print(f"[dim]{prompt_version.template}[/dim]")
+
+    except ValueError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def compare_prompts(
+    input_csv: str = typer.Argument(..., help="Path to input CSV with papers"),
+    provider: str = typer.Option(..., "-p", "--provider", help="LLM provider"),
+    prompt_version_1: str = typer.Option(..., "--prompt1", help="First prompt version"),
+    prompt_version_2: str = typer.Option(..., "--prompt2", help="Second prompt version"),
+    output_dir: str = typer.Option(..., "-o", "--output-dir", help="Directory to save comparison results"),
+    sample_size: Optional[int] = typer.Option(None, "--sample", help="Number of papers to compare (for testing)"),
+    model: Optional[str] = typer.Option(None, "--model", help="Specific model to use"),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key for LLM provider"),
+):
+    """Compare screening results using two different prompt versions."""
+    from pathlib import Path
+    import tempfile
+
+    try:
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # Read and optionally sample papers
+        papers = read_papers_from_csv(input_csv)
+        if sample_size and sample_size < len(papers):
+            papers = papers[:sample_size]
+            console.print(f"[blue]Using sample of {sample_size} papers for comparison[/blue]")
+
+        # Create temporary files for intermediate results
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as temp1, \
+             tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as temp2:
+
+            temp1_path = temp1.name
+            temp2_path = temp2.name
+
+        try:
+            # Screen with first prompt
+            console.print(f"[blue]Screening with prompt version {prompt_version_1}...[/blue]")
+            result1_path = output_path / f"results_{prompt_version_1}.csv"
+
+            # Run screen command programmatically for first prompt
+            screen(
+                input_csv=input_csv,
+                provider=provider,
+                output=str(result1_path),
+                prompt_version=prompt_version_1,
+                model=model,
+                api_key=api_key,
+                usage_report=None,
+                backup_file=None
+            )
+
+            # Screen with second prompt
+            console.print(f"[blue]Screening with prompt version {prompt_version_2}...[/blue]")
+            result2_path = output_path / f"results_{prompt_version_2}.csv"
+
+            # Run screen command programmatically for second prompt
+            screen(
+                input_csv=input_csv,
+                provider=provider,
+                output=str(result2_path),
+                prompt_version=prompt_version_2,
+                model=model,
+                api_key=api_key,
+                usage_report=None,
+                backup_file=None
+            )
+
+            # Compare results
+            console.print(f"[blue]Comparing prompt versions...[/blue]")
+            comparison_path = output_path / f"comparison_{prompt_version_1}_vs_{prompt_version_2}.json"
+
+            # Run compare command programmatically
+            compare(
+                evaluation1_csv=str(result1_path),
+                evaluation2_csv=str(result2_path),
+                output=str(comparison_path)
+            )
+
+            console.print(f"[green]✓ Prompt comparison complete![/green]")
+            console.print(f"Results saved in: {output_path}")
+
+        finally:
+            # Clean up temporary files
+            import os
+            try:
+                os.unlink(temp1_path)
+                os.unlink(temp2_path)
+            except:
+                pass
+
+    except Exception as e:
+        console.print(f"[red]Error: {str(e)}[/red]")
+        raise typer.Exit(1)
 
 def _calculate_duration(start_time: str, end_time: Optional[str]) -> str:
     """Calculate duration between start and end times."""
