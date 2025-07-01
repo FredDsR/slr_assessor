@@ -18,6 +18,7 @@ slr-assessor screen papers.csv --provider openai --output results.csv
 - `--output`: Output CSV file path
 - `--usage-report`: Save usage statistics to JSON file
 - `--backup-file`: Enable persistent processing with backup file
+- `--prompt-version`: Select prompt template version (e.g., `v1.0`, `v1.1`, `v2.0`)
 
 **Examples:**
 ```bash
@@ -42,6 +43,21 @@ slr-assessor screen papers.csv \
   --provider anthropic \
   --model claude-3-sonnet-20240229 \
   --output results.csv
+
+# Using specific prompt version
+slr-assessor screen papers.csv \
+  --provider openai \
+  --output results.csv \
+  --prompt-version v2.0
+
+# Advanced usage with all options
+slr-assessor screen papers.csv \
+  --provider gemini \
+  --model gemini-2.5-flash \
+  --output results.csv \
+  --prompt-version v1.1 \
+  --usage-report usage.json \
+  --backup-file session_backup.json
 ```
 
 **💾 Backup Feature:**
@@ -82,6 +98,47 @@ slr-assessor compare results1.csv results2.csv --output conflict_report.json
 - Conflict identification
 - Agreement statistics
 - Detailed disagreement analysis
+- Prompt version comparison and tracking
+
+### `list-prompts` - List Available Prompt Versions
+
+Display all available prompt template versions.
+
+```bash
+slr-assessor list-prompts
+```
+
+**Output:**
+- Version identifier
+- Description
+- Creation date
+- Hash for verification
+
+### `show-prompt` - Display Prompt Template
+
+Show the full content of a specific prompt version.
+
+```bash
+slr-assessor show-prompt v1.1
+```
+
+**Features:**
+- Full prompt template display
+- Version metadata
+- Usage guidelines
+
+### `compare-prompts` - Compare Prompt Versions
+
+Compare two prompt template versions side by side.
+
+```bash
+slr-assessor compare-prompts v1.0 v2.0
+```
+
+**Features:**
+- Side-by-side comparison
+- Difference highlighting
+- Version metadata comparison
 
 ### `estimate-cost` - Cost Estimation
 
@@ -152,6 +209,7 @@ The output CSV includes:
 - Total score and decision
 - Token usage and cost information (when available)
 - Model and provider information
+- Prompt version and hash for traceability
 
 ### Usage Report JSON
 
@@ -176,6 +234,18 @@ Contains detailed session statistics:
 Provides concordance analysis:
 ```json
 {
+  "metadata": {
+    "comparison_id": "uuid",
+    "timestamp": "2025-06-28T10:00:00Z",
+    "dataset1_info": {
+      "filename": "results1.csv",
+      "prompt_version": "v1.0"
+    },
+    "dataset2_info": {
+      "filename": "results2.csv", 
+      "prompt_version": "v1.1"
+    }
+  },
   "cohen_kappa": 0.85,
   "agreement_percentage": 92.5,
   "total_comparisons": 100,
@@ -218,6 +288,63 @@ DEFAULT_MODEL=gpt-4
 - `claude-3-haiku-20240307` (cost-effective)
 - `claude-3-opus-20240229` (highest accuracy)
 
+## Prompt Versioning
+
+The SLR Assessor supports multiple prompt template versions, allowing you to:
+- Compare different assessment approaches
+- Maintain consistency across evaluations
+- Track prompt evolution over time
+- Ensure reproducible results
+
+### Available Prompt Versions
+
+**v1.0 - Default**
+- Basic QA assessment format
+- Standard reasoning structure
+- Stable and well-tested
+
+**v1.1 - Enhanced**
+- Improved reasoning guidance
+- Better structured responses
+- Enhanced clarity for complex papers
+
+**v2.0 - Experimental**
+- Advanced assessment criteria
+- Detailed reasoning requirements
+- Optimized for nuanced evaluations
+
+### Using Prompt Versions
+
+```bash
+# List available prompt versions
+slr-assessor list-prompts
+
+# Use specific version for screening
+slr-assessor screen papers.csv --prompt-version v1.1 --output results.csv
+
+# View prompt template
+slr-assessor show-prompt v2.0
+
+# Compare two prompt versions
+slr-assessor compare-prompts v1.0 v2.0
+```
+
+### Prompt Version Tracking
+
+All evaluation results include prompt version metadata:
+- Version identifier (e.g., "v1.1")
+- Template hash for verification
+- Creation timestamp
+- Full traceability in comparison reports
+
+### Best Practices for Prompt Versioning
+
+1. **Start with v1.0** for initial assessments
+2. **Test newer versions** on small datasets first
+3. **Document version choices** for reproducibility
+4. **Compare results** across versions when needed
+5. **Use consistent versions** within the same study
+
 ## Best Practices
 
 ### Cost Optimization
@@ -237,7 +364,9 @@ DEFAULT_MODEL=gpt-4
 ### Workflow Recommendations
 
 1. **Start small**: Test with 10-20 papers first
-2. **Estimate costs**: Always run cost estimation for large datasets
-3. **Track usage**: Save usage reports for analysis
-4. **Validate results**: Spot-check LLM assessments
-5. **Document decisions**: Keep records of model choices and rationale
+2. **Choose prompt version**: Select appropriate version for your needs
+3. **Estimate costs**: Always run cost estimation for large datasets
+4. **Track usage**: Save usage reports for analysis
+5. **Validate results**: Spot-check LLM assessments
+6. **Document decisions**: Keep records of model and prompt version choices
+7. **Compare approaches**: Test different prompt versions when needed

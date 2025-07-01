@@ -6,7 +6,8 @@ A command-line interface tool designed to standardize and accelerate the paper s
 
 - 🤖 **Automated Paper Screening**: Use LLMs (OpenAI, Gemini, Anthropic) for preliminary assessment
 - 📋 **Standardized QA Protocol**: Consistent 4-point evaluation framework
-- 💰 **Cost Management**: Estimate and track token usage and costs
+- � **Prompt Versioning**: Multiple assessment approaches with version control and comparison
+- �💰 **Cost Management**: Estimate and track token usage and costs
 - 📊 **Concordance Analysis**: Calculate Cohen's Kappa and identify conflicts
 - 🔍 **Traceability**: Structured CSV outputs with clear audit trails
 - 🔧 **Multiple Providers**: Support for OpenAI, Google Gemini, and Anthropic

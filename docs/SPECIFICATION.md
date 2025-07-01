@@ -117,8 +117,14 @@ slr_assessor/
 │   ├── evaluator.py   # Core logic for scoring and decision making
 │   └── comparator.py  # Logic for comparing evaluations and calculating Kappa
 ├── llm/
-│   ├── providers.py   # Abstraction layer and concrete LLM provider integrations
-│   └── prompt.py      # Prompt template storage
+│   ├── providers.py     # Abstraction layer and concrete LLM provider integrations
+│   ├── prompt.py        # Core prompt utilities (deprecated - kept for compatibility)
+│   ├── prompt_manager.py # Prompt versioning management system
+│   └── prompts/         # Directory containing versioned prompt templates
+│       ├── __init__.py
+│       ├── v1_0_default.py
+│       ├── v1_1_enhanced.py
+│       └── v2_0_experimental.py
 └── utils/
     └── io.py          # CSV reading and writing utilities
 .env                   # For storing API keys
@@ -135,7 +141,9 @@ pyproject.toml         # Project metadata and dependencies
       * Defines a base protocol/abstract class `LLMProvider` with a single method: `get_assessment(prompt: str) -> str`.
       * Contains concrete implementations for different providers (e.g., `OpenAIProvider`, `GoogleGeminiProvider`) that inherit from `LLMProvider`.
       * A factory function will select the provider based on the user's CLI option.
-  * `llm/prompt.py`: Stores the master prompt template.
+  * `llm/prompt_manager.py`: Manages prompt versioning system, loading built-in and custom prompt versions.
+  * `llm/prompts/`: Directory containing versioned prompt templates with built-in versions (v1.0, v1.1, v2.0).
+  * `llm/prompt.py`: Legacy prompt utilities (maintained for backward compatibility).
   * `utils/io.py`: Contains helper functions to read data from an input CSV into a list of `Paper` models and to write a list of `EvaluationResult` models to an output CSV.
 
 ## 4\. Command-Line Interface (CLI) Specification
@@ -150,6 +158,7 @@ The tool will be invoked as `slr-assessor`.
     slr-assessor screen <INPUT_CSV> \
         --provider [openai|gemini|anthropic] \
         --output <OUTPUT_CSV> \
+        --prompt-version <VERSION> \
         --api-key <YOUR_API_KEY>
     ```
   * **Arguments:**
@@ -157,6 +166,7 @@ The tool will be invoked as `slr-assessor`.
   * **Options:**
       * `--provider, -p`: (Required) The LLM provider to use.
       * `--output, -o`: (Required) Path to save the resulting evaluation CSV.
+      * `--prompt-version`: The prompt version to use (defaults to v1.0).
       * `--api-key`: The API key for the LLM provider. **If not provided, the tool must look for a corresponding environment variable (e.g., `OPENAI_API_KEY`).**
   * **Output:**
       * A CSV file at the specified output path, with columns matching the `EvaluationResult` model.
@@ -192,6 +202,50 @@ The tool will be invoked as `slr-assessor`.
       * **Console:** A summary report printed to standard output, including the total number of conflicts and the Cohen's Kappa score.
       * **Report File:** If `--output` is provided, a JSON file is created containing the detailed `ConflictReport` data.
 
+### Use Case 4: `list-prompts` Command
+
+  * **Purpose:** Lists all available prompt versions (built-in and custom).
+  * **Usage:**
+    ```bash
+    slr-assessor list-prompts
+    ```
+  * **Output:**
+      * **Console:** Displays a formatted list of all available prompt versions with their metadata.
+
+### Use Case 5: `show-prompt` Command
+
+  * **Purpose:** Shows detailed information about a specific prompt version.
+  * **Usage:**
+    ```bash
+    slr-assessor show-prompt <VERSION>
+    ```
+  * **Arguments:**
+      * `VERSION`: The prompt version to display (e.g., v1.0, v1.1, v2.0).
+  * **Output:**
+      * **Console:** Displays detailed information about the prompt version including name, description, creation date, and assessment questions.
+
+### Use Case 6: `compare-prompts` Command
+
+  * **Purpose:** Compares screening results using two different prompt versions.
+  * **Usage:**
+    ```bash
+    slr-assessor compare-prompts <PAPERS_CSV> \
+        --version1 <VERSION1> \
+        --version2 <VERSION2> \
+        --provider <PROVIDER> \
+        --output <OUTPUT_CSV>
+    ```
+  * **Arguments:**
+      * `PAPERS_CSV`: Path to the input CSV file with papers to screen.
+  * **Options:**
+      * `--version1`: First prompt version to use for comparison.
+      * `--version2`: Second prompt version to use for comparison.
+      * `--provider`: LLM provider to use for both screenings.
+      * `--output, -o`: Path to save the comparison report CSV.
+  * **Output:**
+      * **Console:** Summary of differences between the two prompt versions.
+      * **Report File:** CSV file containing side-by-side results and conflict analysis.
+
 ## 5\. Key Logic & Business Rules
 
   * **Scoring Logic:**
@@ -208,55 +262,57 @@ The tool will be invoked as `slr-assessor`.
       * The `scikit-learn` library (`sklearn.metrics.cohen_kappa_score`) must be used.
       * Papers present in one file but not the other (based on `id`) should be ignored for the calculation.
 
-## 6\. LLM Prompt Template
+## 6. LLM Prompt Versioning System
 
-The prompt sent to the LLM must be structured as follows to ensure consistent JSON output.
+The system uses a versioned prompt management approach to support different assessment strategies and enable prompt evolution while maintaining backwards compatibility.
+
+### Prompt Versions
+
+Each prompt version is defined by:
+- **Version ID**: Semantic version identifier (e.g., v1.0, v1.1, v2.0)
+- **Name**: Human-readable name for the prompt
+- **Description**: Brief description of the prompt's purpose or improvements
+- **Creation Date**: When the prompt version was created
+- **Assessment Questions**: The specific QA questions used
+- **Template**: The complete prompt template
+
+### Built-in Prompt Versions
+
+- **v1.0 (Default)**: Original SLR assessment prompt for AI-traditional community integration studies
+- **v1.1 (Enhanced)**: Improved prompt with clearer criteria and scoring guidelines  
+- **v2.0 (Experimental)**: Cultural-participatory focus with emphasis on community aspects
+
+### Prompt Template Structure
+
+All prompt versions follow this general structure to ensure consistent JSON output:
 
 ```text
 You are a meticulous academic researcher tasked with conducting a quality assessment of a research paper based solely on its abstract. Your evaluation must strictly follow the provided Quality Assurance (QA) criteria.
 
 **Instructions:**
-1.  Read the abstract below carefully.
-2.  For each of the four QA questions, provide a score and a brief, one-sentence reason for that score.
-3.  The score for each question MUST be one of these three values: **1** (satisfies), **0.5** (partially satisfies), or **0** (does not satisfy).
-4.  Your entire response must be a single, valid JSON object, with no text before or after it.
+1. Read the abstract below carefully.
+2. For each of the QA questions, provide a score and a brief, one-sentence reason for that score.
+3. The score for each question MUST be one of these three values: **1** (satisfies), **0.5** (partially satisfies), or **0** (does not satisfy).
+4. Your entire response must be a single, valid JSON object, with no text before or after it.
 
 **Abstract to Evaluate:**
 """
 {abstract_text}
 """
 
+**Assessment Questions:**
+{qa_questions}
+
 **JSON Output Structure:**
-{
-  "assessments": [
-    {
-      "qa_id": "QA1",
-      "question": "Does the abstract clearly present the study's objective, research question, or central focus?",
-      "score": <0, 0.5, or 1>,
-      "reason": "..."
-    },
-    {
-      "qa_id": "QA2",
-      "question": "Does the abstract provide any indication of a practical application or an empirical result?",
-      "score": <0, 0.5, or 1>,
-      "reason": "..."
-    },
-    {
-      "qa_id": "QA3",
-      "question": "Does the abstract contextualize the challenge faced by the traditional community or by the application of AI?",
-      "score": <0, 0.5, or 1>,
-      "reason": "..."
-    },
-    {
-      "qa_id": "QA4",
-      "question": "Does the abstract directly address the integration of AI with traditional communities/knowledge?",
-      "score": <0, 0.5, or 1>,
-      "reason": "..."
-    }
-  ],
-  "overall_summary": "A brief overall summary of the abstract's quality and relevance."
-}
+{json_structure}
 ```
+
+### Prompt Versioning Benefits
+
+- **Reproducibility**: Track which prompt version was used for each evaluation
+- **Comparison**: Compare results across different prompt versions
+- **Evolution**: Improve prompts while maintaining backwards compatibility
+- **Customization**: Support for custom prompt versions alongside built-in ones
 
 ## 7\. Dependencies & Environment
 
