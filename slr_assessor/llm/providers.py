@@ -134,6 +134,9 @@ class GeminiProvider:
                 config=types.GenerateContentConfig(
                     temperature=0.1,
                     max_output_tokens=1000,
+                    thinking_config=types.ThinkingConfig(
+                        thinking_budget=0
+                    ),
                 ),
             )
 
@@ -166,7 +169,7 @@ class GeminiProvider:
 
             return response.text, token_usage
         except Exception as e:
-            raise RuntimeError(f"Gemini API error: {str(e)}")
+            raise RuntimeError(f"Gemini API error: {str(e)}") from e
 
 
 class AnthropicProvider:
