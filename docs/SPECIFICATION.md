@@ -72,11 +72,11 @@ class EvaluationResult(BaseModel):
     qa3_reason: str
     qa4_score: float
     qa4_reason: str
-    
+
     # Calculated Totals
     total_score: float
     decision: Literal["Include", "Exclude", "Conditional Review"]
-    
+
     # Metadata
     llm_summary: Optional[str] = None # Only for LLM evaluations
     error: Optional[str] = None # To log any processing errors
@@ -230,16 +230,16 @@ The tool will be invoked as `slr-assessor`.
   * **Usage:**
     ```bash
     slr-assessor compare-prompts <PAPERS_CSV> \
-        --version1 <VERSION1> \
-        --version2 <VERSION2> \
+        --prompt1 <VERSION1> \
+        --prompt2 <VERSION2> \
         --provider <PROVIDER> \
         --output <OUTPUT_CSV>
     ```
   * **Arguments:**
       * `PAPERS_CSV`: Path to the input CSV file with papers to screen.
   * **Options:**
-      * `--version1`: First prompt version to use for comparison.
-      * `--version2`: Second prompt version to use for comparison.
+      * `--prompt1`: First prompt version to use for comparison.
+      * `--prompt2`: Second prompt version to use for comparison.
       * `--provider`: LLM provider to use for both screenings.
       * `--output, -o`: Path to save the comparison report CSV.
   * **Output:**
@@ -279,7 +279,7 @@ Each prompt version is defined by:
 ### Built-in Prompt Versions
 
 - **v1.0 (Default)**: Original SLR assessment prompt for AI-traditional community integration studies
-- **v1.1 (Enhanced)**: Improved prompt with clearer criteria and scoring guidelines  
+- **v1.1 (Enhanced)**: Improved prompt with clearer criteria and scoring guidelines
 - **v2.0 (Experimental)**: Cultural-participatory focus with emphasis on community aspects
 
 ### Prompt Template Structure

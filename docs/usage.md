@@ -132,7 +132,7 @@ slr-assessor show-prompt v1.1
 Compare two prompt template versions side by side.
 
 ```bash
-slr-assessor compare-prompts v1.0 v2.0
+slr-assessor compare-prompts papers.csv --provider openai --prompt1 v1.0 --prompt2 v2.0 --output-dir results/
 ```
 
 **Features:**
@@ -242,7 +242,7 @@ Provides concordance analysis:
       "prompt_version": "v1.0"
     },
     "dataset2_info": {
-      "filename": "results2.csv", 
+      "filename": "results2.csv",
       "prompt_version": "v1.1"
     }
   },
