@@ -28,6 +28,8 @@ def create_evaluation_result(
     qa_reasons: dict[str, str],
     llm_summary: str = None,
     error: str = None,
+    prompt_version: str = "v1.0",
+    prompt_hash: str = None,
 ) -> EvaluationResult:
     """Create an EvaluationResult with calculated totals and decision.
 
@@ -39,6 +41,8 @@ def create_evaluation_result(
         qa_reasons: Dictionary with keys 'qa1', 'qa2', 'qa3', 'qa4' and reason strings
         llm_summary: Optional summary from LLM assessment
         error: Optional error message if processing failed
+        prompt_version: Version of prompt used for evaluation
+        prompt_hash: Hash of prompt for exact identification
 
     Returns:
         EvaluationResult with calculated total_score and decision
@@ -65,4 +69,6 @@ def create_evaluation_result(
         decision=decision,
         llm_summary=llm_summary,
         error=error,
+        prompt_version=prompt_version,
+        prompt_hash=prompt_hash,
     )

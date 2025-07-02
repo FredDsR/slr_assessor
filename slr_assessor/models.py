@@ -100,6 +100,8 @@ class EvaluationResult(BaseModel):
     # Metadata
     llm_summary: Optional[str] = None  # Only for LLM evaluations
     error: Optional[str] = None  # To log any processing errors
+    prompt_version: str = "v1.0"  # Prompt version used for evaluation
+    prompt_hash: Optional[str] = None  # Hash for exact prompt identification
 
     # Token usage (only for LLM evaluations)
     token_usage: Optional[TokenUsage] = None
@@ -114,6 +116,8 @@ class Conflict(BaseModel):
     total_score_1: float
     total_score_2: float
     score_difference: float
+    prompt_version_1: Optional[str] = None  # Prompt version for first evaluation
+    prompt_version_2: Optional[str] = None  # Prompt version for second evaluation
 
 
 class ConflictReport(BaseModel):
@@ -123,6 +127,7 @@ class ConflictReport(BaseModel):
     total_conflicts: int
     cohen_kappa_score: float
     conflicts: list[Conflict]
+    metadata: Optional[dict] = None  # Additional metadata like prompt versions
 
 
 class BackupSession(BaseModel):
