@@ -624,6 +624,7 @@ def list_prompts():
             console.print(f"  [bold]{version.version}[/bold] - {version.name}")
             console.print(f"    {version.description}")
             console.print(f"    Created: {version.created_date}")
+            console.print(f"    Hash: {prompt_manager.get_prompt_hash(version.version)}")
 
     if custom_versions:
         console.print("\n[bold blue]Custom Prompt Versions:[/bold blue]")
@@ -631,6 +632,7 @@ def list_prompts():
             console.print(f"  [bold]{version.version}[/bold] - {version.name}")
             console.print(f"    {version.description}")
             console.print(f"    Created: {version.created_date}")
+            console.print(f"    Hash: {prompt_manager.get_prompt_hash(version.version)}")
 
     if not built_in_versions and not custom_versions:
         console.print("[yellow]No prompt versions found[/yellow]")
@@ -653,6 +655,7 @@ def show_prompt(
         console.print(f"Description: {prompt_version.description}")
         console.print(f"Created: {prompt_version.created_date}")
         console.print(f"Active: {'Yes' if prompt_version.is_active else 'No'}")
+        console.print(f"Hash: {prompt_manager.get_prompt_hash(version)}")
 
         console.print("\n[bold]Assessment Questions:[/bold]")
         for qa_key, question in prompt_version.qa_questions.items():
