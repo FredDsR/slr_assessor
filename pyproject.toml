@@ -67,10 +67,6 @@ lint.select = [
     "UP",  # pyupgrade
 ]
 
-# Ignore specific rules
-lint.ignore = [
-    "E501",  # Line too long (handled by formatter)
-]
 
 # Exclude patterns
 exclude = [
