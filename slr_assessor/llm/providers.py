@@ -128,17 +128,27 @@ class GeminiProvider:
         try:
             from google.genai import types
 
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0.1,
-                    max_output_tokens=1000,
-                    thinking_config=types.ThinkingConfig(
-                        thinking_budget=0
+            if "2.5" in self.model:
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.1,
+                        max_output_tokens=1000,
+                        thinking_config=types.ThinkingConfig(
+                            thinking_budget=0
+                        ),
                     ),
-                ),
-            )
+                )
+            else:
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.1,
+                        max_output_tokens=1000
+                    ),
+                )
 
             # Gemini doesn't always provide detailed token usage
             # We'll estimate based on the response
