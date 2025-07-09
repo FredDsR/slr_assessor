@@ -56,6 +56,11 @@ def estimate_tokens(text: str, model: str = "gpt-4") -> int:
         if model.startswith("gpt"):
             encoding = tiktoken.encoding_for_model(model)
             return len(encoding.encode(text))
+        elif model.startswith("gemini"):
+            # Gemini models use a different tokenizer
+            from google import genai
+            client = genai.Client()
+            return client.models.count_tokens(model=model, contents=text)
         else:
             # Rough estimation for non-OpenAI models (4 chars per token average)
             return len(text) // 4
