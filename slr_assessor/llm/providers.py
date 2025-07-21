@@ -150,17 +150,19 @@ class GeminiProvider:
                     ),
                 )
 
-            # Gemini doesn't always provide detailed token usage
-            # We'll estimate based on the response
-            from ..utils.cost_calculator import calculate_cost, estimate_tokens
+            from ..utils.cost_calculator import calculate_cost
 
-            estimated_input_tokens = estimate_tokens(prompt, "gemini")
-            estimated_output_tokens = estimate_tokens(response.text, "gemini")
+            input_tokens = response.usage_metadata.prompt_token_count
+            output_tokens = response.usage_metadata.candidates_token_count
+            if hasattr(response.usage_metadata, "thoughts_token_count") and response.usage_metadata.thoughts_token_count:
+                output_tokens += response.usage_metadata.thoughts_token_count
+            if hasattr(response.usage_metadata, "tool_use_prompt_token_count") and response.usage_metadata.tool_use_prompt_token_count:
+                output_tokens += response.usage_metadata.tool_use_prompt_token_count
 
             token_usage = TokenUsage(
-                input_tokens=estimated_input_tokens,
-                output_tokens=estimated_output_tokens,
-                total_tokens=estimated_input_tokens + estimated_output_tokens,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                total_tokens=input_tokens + output_tokens,
                 model=self.model,
                 provider="gemini",
             )
