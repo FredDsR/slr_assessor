@@ -210,6 +210,154 @@ class TestGeminiProvider:
                 assert usage.model == "gemini-1.5-flash"
                 assert usage.provider == "gemini"
 
+    @patch("slr_assessor.utils.cost_calculator.calculate_cost")
+    def test_get_assessment_gemini_2_5_model(self, mock_calculate_cost):
+        """Test assessment with Gemini 2.5 model (thinking config)."""
+        # Create a proper mock usage_metadata object
+        class MockUsageMetadata:
+            def __init__(self):
+                self.prompt_token_count = 100
+                self.candidates_token_count = 50
+                self.thoughts_token_count = 25
+
+        # Mock the response object
+        mock_response = Mock()
+        mock_response.text = "Assessment result"
+        mock_response.usage_metadata = MockUsageMetadata()
+
+        # Mock the client and generate_content method
+        mock_client = Mock()
+        mock_client.models.generate_content.return_value = mock_response
+
+        # Mock types module
+        mock_types = Mock()
+        mock_types.GenerateContentConfig = Mock()
+        mock_types.ThinkingConfig = Mock()
+
+        mock_calculate_cost.return_value = 0.01
+
+        with patch("google.genai.types", mock_types):
+            with patch.object(GeminiProvider, '__init__', return_value=None):
+                provider = GeminiProvider.__new__(GeminiProvider)
+                provider.client = mock_client
+                provider.model = "gemini-2.5-flash"
+                provider.api_key = "test-key"
+
+                response, usage = provider.get_assessment("test prompt")
+
+                assert response == "Assessment result"
+                assert usage.input_tokens == 100
+                assert usage.output_tokens == 75  # candidates_token_count + thoughts_token_count
+                assert usage.total_tokens == 175
+                assert usage.model == "gemini-2.5-flash"
+                assert usage.provider == "gemini"
+
+                # Verify thinking config was used for 2.5 model
+                mock_types.ThinkingConfig.assert_called_once_with(thinking_budget=-1)
+
+    @patch("slr_assessor.utils.cost_calculator.calculate_cost")
+    def test_get_assessment_regular_model(self, mock_calculate_cost):
+        """Test assessment with regular Gemini model (no thinking config)."""
+        # Create a proper mock usage_metadata object (without thoughts_token_count)
+        class MockUsageMetadata:
+            def __init__(self):
+                self.prompt_token_count = 100
+                self.candidates_token_count = 50
+                # No thoughts_token_count or tool_use_prompt_token_count
+
+        # Mock the response object
+        mock_response = Mock()
+        mock_response.text = "Assessment result"
+        mock_response.usage_metadata = MockUsageMetadata()
+
+        # Mock the client and generate_content method
+        mock_client = Mock()
+        mock_client.models.generate_content.return_value = mock_response
+
+        # Mock types module
+        mock_types = Mock()
+        mock_types.GenerateContentConfig = Mock()
+        mock_types.ThinkingConfig = Mock()
+
+        mock_calculate_cost.return_value = 0.01
+
+        with patch("google.genai.types", mock_types):
+            with patch.object(GeminiProvider, '__init__', return_value=None):
+                provider = GeminiProvider.__new__(GeminiProvider)
+                provider.client = mock_client
+                provider.model = "gemini-1.5-flash"
+                provider.api_key = "test-key"
+
+                response, usage = provider.get_assessment("test prompt")
+
+                assert response == "Assessment result"
+                assert usage.input_tokens == 100
+                assert usage.output_tokens == 50  # only candidates_token_count
+                assert usage.total_tokens == 150
+                assert usage.model == "gemini-1.5-flash"
+                assert usage.provider == "gemini"
+
+                # Verify thinking config was NOT used for regular model
+                mock_types.ThinkingConfig.assert_not_called()
+
+    def test_get_assessment_api_error(self):
+        """Test handling of API errors."""
+        # Mock the client to raise an exception
+        mock_client = Mock()
+        mock_client.models.generate_content.side_effect = Exception("API Error")
+
+        with patch.object(GeminiProvider, '__init__', return_value=None):
+            provider = GeminiProvider.__new__(GeminiProvider)
+            provider.client = mock_client
+            provider.model = "gemini-1.5-flash"
+            provider.api_key = "test-key"
+
+            with pytest.raises(RuntimeError, match="Gemini API error"):
+                provider.get_assessment("test prompt")
+
+    @patch("slr_assessor.utils.cost_calculator.calculate_cost")
+    def test_get_assessment_cost_calculation_failure(self, mock_calculate_cost):
+        """Test handling of cost calculation failure."""
+        # Create a proper mock usage_metadata object
+        class MockUsageMetadata:
+            def __init__(self):
+                self.prompt_token_count = 100
+                self.candidates_token_count = 50
+
+        # Mock the response object
+        mock_response = Mock()
+        mock_response.text = "Assessment result"
+        mock_response.usage_metadata = MockUsageMetadata()
+
+        # Mock the client and generate_content method
+        mock_client = Mock()
+        mock_client.models.generate_content.return_value = mock_response
+
+        # Mock types module
+        mock_types = Mock()
+        mock_types.GenerateContentConfig = Mock()
+        mock_types.ThinkingConfig = Mock()
+
+        # Make cost calculation fail
+        mock_calculate_cost.side_effect = Exception("Cost calculation failed")
+
+        with patch("google.genai.types", mock_types):
+            with patch.object(GeminiProvider, '__init__', return_value=None):
+                provider = GeminiProvider.__new__(GeminiProvider)
+                provider.client = mock_client
+                provider.model = "gemini-1.5-flash"
+                provider.api_key = "test-key"
+
+                response, usage = provider.get_assessment("test prompt")
+
+                assert response == "Assessment result"
+                assert usage.input_tokens == 100
+                assert usage.output_tokens == 50
+                assert usage.total_tokens == 150
+                assert usage.model == "gemini-1.5-flash"
+                assert usage.provider == "gemini"
+                # Cost should be None when calculation fails
+                assert usage.estimated_cost is None
 
 class TestAnthropicProvider:
     """Test the Anthropic provider implementation."""
